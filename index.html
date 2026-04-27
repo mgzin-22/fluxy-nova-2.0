@@ -1,0 +1,248 @@
+ <!DOCTYPE html>
+ <html lang="pt-BR">
+ <head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Fluxy - O fluxo certo para seu negócio</title>
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="styles/home.css">
+   <script src="https://unpkg.com/lucide@latest"></script>
+ </head>
+ <body>
+ 
+   <!-- Background Animated Shapes -->
+   <div class="bg-shapes">
+     <div class="shape shape-1"></div>
+     <div class="shape shape-2"></div>
+   </div>
+ 
+   <!-- Splash Screen -->
+   <div id="splash">
+     <div class="splash-bg"></div>
+     <div class="splash-logo">
+      <img src="assets/logo.png" alt="Fluxy" class="logo-splash" />
+     </div>
+   </div>
+ 
+   <!-- Navigation -->
+   <nav class="navbar">
+     <div class="wrap nav-wrap">
+       <div class="nav-logo">
+        <img src="assets/logo.png" alt="Fluxy" class="logo-nav" />
+       </div>
+       <div class="nav-links">
+         <a href="#home">Home</a>
+         <a href="#sobre">Sobre</a>
+         <a href="#servicos">Serviços</a>
+         <a href="#planos">Planos</a>
+       </div>
+       <div class="nav-actions">
+        <a class="btn btn-glass" href="auth.html">Entrar</a>
+        <a class="btn btn-primary" href="auth.html">Criar conta</a>
+       </div>
+     </div>
+   </nav>
+ 
+   <!-- Hero Section -->
+   <header id="home" class="hero wrap grid-2">
+     <div class="hero-content reveal">
+       <h1 class="t-display">O <em>fluxo certo</em> para o seu negócio.</h1>
+       <p class="t-sub" style="max-width: 480px;">Controle de vendas, estoque e clientes em uma única plataforma financeira. Clareza e simplicidade para pequenos empreendedores.</p>
+       <div class="hero-cta">
+            <a class="btn btn-primary" href="auth.html">Começar agora</a>
+            <button class="btn btn-glass">Ver demonstração</button>
+        </div>
+     </div>
+     
+     <div class="hero-visual reveal" style="transition-delay: 0.2s;">
+       <!-- Dashboard Preview Card -->
+       <div class="glass-panel dashboard-preview">
+         <div class="db-header">
+           <div style="display:flex; align-items:center; gap:8px; font-weight:600;"><i data-lucide="activity" width="18"></i> Fluxo de Caixa</div>
+           <div style="font-size: 0.8rem; color: var(--muted);">Hoje <i data-lucide="chevron-down" width="14"></i></div>
+         </div>
+         <div class="db-cards">
+           <div class="db-card">
+             <div class="label">Entradas</div>
+             <div class="value">R$ 4.250</div>
+             <div style="color:var(--secondary); font-size:0.75rem; display:flex; align-items:center; margin-top:4px;"><i data-lucide="arrow-up-right" width="12"></i> 12.5%</div>
+           </div>
+           <div class="db-card">
+             <div class="label">Saídas</div>
+             <div class="value" style="color:var(--text);">R$ 1.830</div>
+             <div style="color:var(--muted); font-size:0.75rem; display:flex; align-items:center; margin-top:4px;"><i data-lucide="arrow-down-right" width="12"></i> -2.4%</div>
+           </div>
+         </div>
+         <div class="db-chart">
+           <!-- Simplified chart representation -->
+           <svg viewBox="0 0 100 40" preserveAspectRatio="none" style="width:100%; height:100%; padding-top:20px;">
+             <path d="M0,40 L0,20 Q10,10 20,25 T40,15 T60,30 T80,10 T100,20 L100,40 Z" fill="rgba(52, 152, 219, 0.2)" stroke="var(--primary)" stroke-width="2" />
+           </svg>
+         </div>
+         
+         <!-- Floating Element -->
+         <div style="position: absolute; right: -20px; top: 40px; background: var(--white); padding: 12px; border-radius: var(--radius-sm); box-shadow: var(--shadow-md); display:flex; gap:12px; align-items:center; animation: float 6s infinite ease-in-out;">
+           <div style="background:var(--secondary-glow); padding:8px; border-radius:50%;"><i data-lucide="check-circle" width="18" color="var(--secondary)"></i></div>
+           <div>
+             <div style="font-weight:600; font-size:0.85rem;">Venda concluída</div>
+             <div style="color:var(--muted); font-size:0.75rem;">Há 2 minutos</div>
+           </div>
+         </div>
+       </div>
+     </div>
+   </header>
+ 
+
+
+  <!-- About / Social Proof -->
+  <section id="sobre" class="about wrap">
+    <div class="about-grid">
+      <div class="reveal">
+        <h2 class="t-heading">Feito para quem empreende de verdade.</h2>
+        <p class="t-sub">A Fluxy centraliza vendas, estoque e clientes em uma visão prática do dia a dia para você tomar decisões rápidas.</p>
+        <div class="about-badges">
+          <span>1.200 negócios ativos</span>
+          <span>R$ 38 mi processados</span>
+          <span>Suporte em português</span>
+        </div>
+      </div>
+      <div class="about-metrics reveal" style="transition-delay:0.15s;">
+        <article>
+          <strong>87%</strong>
+          <p>dos usuários relatam mais organização financeira no 1º mês.</p>
+        </article>
+        <article>
+          <strong>3h/semana</strong>
+          <p>economizadas com automações de rotina.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+   <!-- Features Section -->
+   <section id="servicos" class="features wrap">
+     <div style="text-align: center; max-width: 600px; margin: 0 auto;" class="reveal">
+       <h2 class="t-heading">Tudo que você precisa em um só lugar.</h2>
+       <p class="t-sub">Funcionalidades pensadas para facilitar a vida do pequeno empreendedor, sem complicação.</p>
+     </div>
+     
+     <div class="features-grid">
+       <div class="feature-card reveal" style="transition-delay: 0.1s;">
+         <div class="feature-icon"><i data-lucide="shopping-bag"></i></div>
+         <h3 style="margin-bottom: 8px;">Controle de Vendas</h3>
+         <p style="color: var(--muted); font-size: 0.9rem;">Registre entradas, pagamentos e emita recibos de forma ágil e segura em qualquer dispositivo.</p>
+       </div>
+       <div class="feature-card reveal" style="transition-delay: 0.2s;">
+         <div class="feature-icon" style="background: var(--secondary-glow); color: var(--secondary);"><i data-lucide="package"></i></div>
+         <h3 style="margin-bottom: 8px;">Gestão de Estoque</h3>
+         <p style="color: var(--muted); font-size: 0.9rem;">Acompanhe a quantidade dos seus produtos, receba alertas e não perca mais nenhuma venda.</p>
+       </div>
+       <div class="feature-card reveal" style="transition-delay: 0.3s;">
+         <div class="feature-icon" style="background: rgba(155, 89, 182, 0.15); color: #9b59b6;"><i data-lucide="users"></i></div>
+         <h3 style="margin-bottom: 8px;">Carteira de Clientes</h3>
+         <p style="color: var(--muted); font-size: 0.9rem;">Fidelize seu público sabendo quem compra mais, com histórico de transações automatizado.</p>
+       </div>
+       <div class="feature-card reveal" style="transition-delay: 0.4s;">
+         <div class="feature-icon" style="background: rgba(241, 196, 15, 0.15); color: #f39c12;"><i data-lucide="pie-chart"></i></div>
+         <h3 style="margin-bottom: 8px;">Relatórios Visuais</h3>
+         <p style="color: var(--muted); font-size: 0.9rem;">Gráficos fáceis de entender que mostram exatamente como está a saúde do seu negócio.</p>
+       </div>
+     </div>
+   </section>
+ 
+   <!-- Pricing Section -->
+   <section id="planos" class="pricing wrap">
+     <div style="text-align: center; max-width: 600px; margin: 0 auto; margin-bottom: var(--space-4);" class="reveal">
+       <h2 class="t-heading">Planos que acompanham seu crescimento.</h2>
+       <p class="t-sub">Modelo Freemium: Comece grátis, faça um upgrade quando precisar.</p>
+     </div>
+     
+     <div class="pricing-carousel reveal">
+       <div class="plan-card">
+         <h3 style="font-size:1.5rem;">Básico</h3>
+         <p style="color:var(--muted); font-size:0.9rem; margin-top:4px;">Para quem está começando</p>
+         <div class="plan-price">Grátis</div>
+         <ul class="plan-features">
+           <li><i data-lucide="check" width="18" color="var(--primary)"></i> 50 vendas por mês</li>
+           <li><i data-lucide="check" width="18" color="var(--primary)"></i> Controle de produtos</li>
+           <li><i data-lucide="check" width="18" color="var(--primary)"></i> Relatórios mensais</li>
+           <li style="color:var(--dim);"><i data-lucide="x" width="18"></i> Suporte prioritário</li>
+         </ul>
+        <a class="btn btn-glass" style="width:100%; margin-top:24px;" href="auth.html">Criar conta grátis</a>
+       </div>
+       
+       <div class="plan-card highlight">
+         <div style="position: absolute; top:-12px; right:32px; background:var(--white); color:var(--primary); padding:4px 12px; border-radius:var(--radius-pill); font-size:0.75rem; font-weight:700; box-shadow:var(--shadow-sm);">Mais escolhido</div>
+         <h3 style="font-size:1.5rem;">Profissional</h3>
+         <p class="text-muted" style="font-size:0.9rem; margin-top:4px;">Acesso completo e ilimitado</p>
+         <div class="plan-price">R$ 29<span style="font-size:1rem; font-weight:400;">/mês</span></div>
+         <ul class="plan-features">
+           <li><i data-lucide="check" width="18"></i> Vendas ilimitadas</li>
+           <li><i data-lucide="check" width="18"></i> Estoque avançado</li>
+           <li><i data-lucide="check" width="18"></i> Integração com WhatsApp</li>
+           <li><i data-lucide="check" width="18"></i> Suporte prioritário</li>
+         </ul>
+         <button class="btn" style="width:100%; background:var(--white); color:var(--primary); margin-top:24px;">Assinar Profissional</button>
+       </div>
+       
+       <div class="plan-card">
+         <h3 style="font-size:1.5rem;">Equipe</h3>
+         <p style="color:var(--muted); font-size:0.9rem; margin-top:4px;">Para pequenas empresas físicas</p>
+         <div class="plan-price">R$ 69<span style="font-size:1rem; font-weight:400; color:var(--muted);">/mês</span></div>
+         <ul class="plan-features">
+           <li><i data-lucide="check" width="18" color="var(--primary)"></i> Tudo do Profissional</li>
+           <li><i data-lucide="check" width="18" color="var(--primary)"></i> Até 5 usuários</li>
+           <li><i data-lucide="check" width="18" color="var(--primary)"></i> Gestão de permissões</li>
+           <li><i data-lucide="check" width="18" color="var(--primary)"></i> Acesso a API</li>
+         </ul>
+         <button class="btn btn-glass" style="width:100%; margin-top:24px;">Assinar Equipe</button>
+       </div>
+     </div>
+   </section>
+ 
+
+
+  <section class="testimonials wrap">
+    <div class="reveal" style="text-align:center; max-width:700px; margin:0 auto;">
+      <h2 class="t-heading">Quem usa, recomenda.</h2>
+      <p class="t-sub">Resultados reais de pequenos negócios usando Fluxy no dia a dia.</p>
+    </div>
+    <div class="testimonials-grid">
+      <article class="testimonial-card reveal" style="transition-delay:0.1s;">
+        <p>“Antes eu controlava tudo em planilha. Hoje tenho visão do caixa em segundos.”</p>
+        <strong>Ana, Loja de Roupas</strong>
+      </article>
+      <article class="testimonial-card reveal" style="transition-delay:0.2s;">
+        <p>“Conseguimos reduzir falta de estoque e vender mais no WhatsApp.”</p>
+        <strong>Rafael, Mercado de Bairro</strong>
+      </article>
+      <article class="testimonial-card reveal" style="transition-delay:0.3s;">
+        <p>“A equipe aprendeu rápido e os relatórios facilitaram nossas decisões.”</p>
+        <strong>Patrícia, Cafeteria</strong>
+      </article>
+    </div>
+  </section>
+
+  <section class="final-cta wrap reveal">
+    <h2>Pronto para simplificar sua operação?</h2>
+    <p>Crie sua conta em menos de 2 minutos e comece grátis.</p>
+    <a class="btn btn-primary" href="auth.html">Criar conta agora</a>
+  </section>
+
+
+   <!-- Footer -->
+   <footer class="wrap">
+     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-3);">
+       <div class="nav-logo"> 
+        <img src="assets/logo.png" alt="Fluxy" class="logo-footer" />
+       </div>
+       <div>&copy; 2026 Fluxy App. Todos os direitos reservados.</div>
+     </div>
+   </footer>
+ 
+   <script src="script.js"></script>
+ </body>
+ </html>
