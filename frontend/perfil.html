@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxy - Perfil</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="styles/dashboard.css" />
+  <link rel="stylesheet" href="styles/perfil.css" />
+</head>
+<body>
+  <aside class="sidebar">
+    <div>
+      <img src="assets/logo.png" alt="Fluxy" class="logo" />
+
+      <nav>
+        <a href="dashboard.html">
+          <i data-lucide="layout-dashboard" class="nav-icon"></i>
+          <span class="nav-text">Dashboard</span>
+        </a>
+
+        <a href="#">
+          <i data-lucide="shopping-cart" class="nav-icon"></i>
+          <span class="nav-text">Vendas</span>
+        </a>
+
+        <a href="#">
+          <i data-lucide="package" class="nav-icon"></i>
+          <span class="nav-text">Estoque</span>
+        </a>
+
+        <a href="#">
+          <i data-lucide="bar-chart-3" class="nav-icon"></i>
+          <span class="nav-text">Relatórios</span>
+        </a>
+
+        <a class="active" href="perfil.html">
+          <i data-lucide="user-round-cog" class="nav-icon"></i>
+          <span class="nav-text">Perfil</span>
+        </a>
+      </nav>
+    </div>
+
+    <button class="logout-btn" onclick="sair()">
+      <i data-lucide="log-out" class="logout-icon"></i>
+      <span class="logout-text">Sair</span>
+    </button>
+  </aside>
+
+  <main class="profile-page">
+    <header class="topbar">
+      <div>
+        <h1>Perfil</h1>
+        <p>Configure sua conta e os dados do seu negócio.</p>
+      </div>
+
+      <button id="toggle-theme" class="theme-btn" type="button">🌙</button>
+    </header>
+
+    <section class="profile-grid">
+      <section class="profile-card">
+        <h2>Dados do usuário</h2>
+
+        <form id="form-profile">
+          <label>Nome</label>
+          <input id="name" type="text" required />
+
+          <label>E-mail</label>
+          <input id="email" type="email" disabled />
+
+          <label>Nome do negócio</label>
+          <input id="businessName" type="text" placeholder="Ex: Loja do Miguel" />
+
+          <label>Tipo de negócio</label>
+          <select id="businessType">
+            <option value="">Selecione</option>
+            <option value="loja">Loja</option>
+            <option value="servicos">Serviços</option>
+            <option value="alimentacao">Alimentação</option>
+            <option value="moda">Moda</option>
+            <option value="outro">Outro</option>
+          </select>
+
+          <label>Meta mensal de vendas</label>
+          <input id="monthlyGoal" type="number" step="0.01" placeholder="Ex: 5000" />
+
+          <button type="submit">Salvar alterações</button>
+        </form>
+
+        <p id="profile-feedback" class="feedback"></p>
+      </section>
+
+      <section class="profile-card">
+        <h2>Segurança</h2>
+
+        <form id="form-password">
+          <label>Senha atual</label>
+          <input id="currentPassword" type="password" required />
+
+          <label>Nova senha</label>
+          <input id="newPassword" type="password" required />
+
+          <button type="submit">Alterar senha</button>
+        </form>
+
+        <p id="password-feedback" class="feedback"></p>
+      </section>
+    </section>
+  </main>
+
+  <script src="js/perfil.js"></script>
+</body>
+</html>

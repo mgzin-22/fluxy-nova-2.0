@@ -1,0 +1,30 @@
+#lista-produtos {
+  display: grid;
+  gap: 10px;
+}
+
+.produto {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--card-strong);
+}
+
+.low-stock {
+  border: 1px solid red;
+}
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.panel {
+  width: 100%;
+  max-width: 600px;
+}
+#lista-produtos {
+  width: 100%;
+  max-width: 900px;
+}

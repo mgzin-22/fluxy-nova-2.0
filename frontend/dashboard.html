@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxy - Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <link rel="stylesheet" href="styles/dashboard.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+</head>
+<body>
+  <aside class="sidebar">
+    <div>
+      <img src="assets/icone.png" alt="Fluxy" class="logo" />
+
+      <nav>
+        <a class="active" href="#">
+          <i data-lucide="layout-dashboard" class="nav-icon"></i>
+          <span class="nav-text">Dashboard</span>
+        </a>
+
+        <a href="#">
+          <i data-lucide="shopping-cart" class="nav-icon"></i>
+          <span class="nav-text">Vendas</span>
+        </a>
+
+        <a href="estoque.html">
+          <i data-lucide="package" class="nav-icon"></i>
+          <span class="nav-text">Estoque</span>
+        </a>
+
+        <a href="#">
+          <i data-lucide="bar-chart-3" class="nav-icon"></i>
+          <span class="nav-text">Relatórios</span>
+        </a>
+
+        <a href="perfil.html">
+          <i data-lucide="user-round-cog" class="nav-icon"></i>
+          <span class="nav-text">Perfil</span>
+        </a>
+      </nav>
+    </div>
+
+    <button class="logout-btn" onclick="sair()">
+      <i data-lucide="log-out" class="logout-icon"></i>
+      <span class="logout-text">Sair</span>
+    </button>
+  </aside>
+
+  <main class="dashboard">
+    <header class="topbar">
+      <div>
+        <h1>Dashboard</h1>
+        <p id="user-name">Bem-vindo(a) à Fluxy</p>
+      </div>
+
+      <button id="toggle-theme" class="theme-btn" type="button">🌙</button>
+    </header>
+
+    <section class="cards">
+      <article class="card">
+        <span>Total vendido</span>
+        <strong id="total-geral">R$ 0,00</strong>
+      </article>
+
+      <article class="card">
+        <span>Quantidade de vendas</span>
+        <strong id="total-qtd">0</strong>
+      </article>
+
+      <article class="card">
+        <span>Pix</span>
+        <strong id="total-pix">R$ 0,00</strong>
+      </article>
+
+      <article class="card">
+        <span>Dinheiro</span>
+        <strong id="total-dinheiro">R$ 0,00</strong>
+      </article>
+
+      <article class="card">
+        <span>Cartão</span>
+        <strong id="total-cartao">R$ 0,00</strong>
+      </article>
+    </section>
+
+    <section class="filters">
+  <button class="filter-btn active" data-filter="all" type="button">Tudo</button>
+  <button class="filter-btn" data-filter="today" type="button">Hoje</button>
+  <button class="filter-btn" data-filter="week" type="button">Semana</button>
+  <button class="filter-btn" data-filter="month" type="button">Mês</button>
+  <button class="filter-btn" data-filter="custom" type="button">Personalizado</button>
+</section>
+
+<section id="custom-filter-box" class="custom-filter-box" style="display: none;">
+  <div>
+    <label for="data-inicial">Data inicial</label>
+    <input id="data-inicial" type="date" />
+  </div>
+
+  <div>
+    <label for="data-final">Data final</label>
+    <input id="data-final" type="date" />
+  </div>
+
+  <button id="aplicar-filtro-data" class="btn-primary" type="button">
+  Aplicar
+</button>
+</section>
+
+    <section class="charts">
+      <article class="chart-card">
+        <h3>Evolução das vendas</h3>
+        <div class="chart-box">
+          <canvas id="grafico-linha"></canvas>
+        </div>
+      </article>
+
+      <article class="chart-card">
+        <h3>Formas de pagamento</h3>
+        <div class="chart-box">
+          <canvas id="grafico-pizza"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <section class="panel">
+        <h2>Nova venda</h2>
+
+        <form id="form-venda">
+          <label for="produto">Produto ou serviço</label>
+          <input id="produto" type="text" placeholder="Ex: Camiseta" required />
+
+          <label for="valor">Valor</label>
+          <input id="valor" type="number" step="0.01" placeholder="Ex: 50" required />
+
+          <label for="pagamento">Forma de pagamento</label>
+          <select id="pagamento" required>
+            <option value="pix">Pix</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao">Cartão</option>
+          </select>
+
+          <button type="submit">Salvar venda</button>
+        </form>
+
+        <p id="feedback" class="feedback"></p>
+      </section>
+
+      <section class="panel">
+        <h2>Últimas vendas</h2>
+        <div id="lista-vendas" class="sales-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

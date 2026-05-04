@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxy - Login e Cadastro</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="styles/auth.css" />
+</head>
+<body>
+  <main class="auth-page">
+    <section class="auth-shell">
+
+      <aside class="auth-brand">
+        <img src="assets/logo.png" alt="Fluxy" class="auth-logo" />
+
+        <h1>O fluxo certo para seu negócio.</h1>
+        <p>
+          Controle vendas, acompanhe seu caixa e organize seu negócio em uma plataforma simples e funcional.
+        </p>
+
+        <div class="brand-list">
+          <span><i class="fa-solid fa-check"></i> Cadastro rápido</span>
+          <span><i class="fa-solid fa-check"></i> Controle de vendas</span>
+          <span><i class="fa-solid fa-check"></i> Dashboard financeiro</span>
+        </div>
+
+        <a href="index.html" class="back-link">Voltar para Home</a>
+      </aside>
+
+      <section class="auth-card">
+        <div class="tabs">
+          <button id="tab-login" class="tab is-active" type="button">Entrar</button>
+          <button id="tab-register" class="tab" type="button">Criar conta</button>
+        </div>
+
+        <div class="slider-viewport">
+          <div class="forms-wrapper" id="forms-wrapper">
+
+            <form id="panel-login" class="form form-panel is-active" novalidate>
+              <h2>Entrar na conta</h2>
+              <p class="form-subtitle">Acesse seu painel Fluxy.</p>
+
+              <label for="login-email">E-mail</label>
+              <div class="input-group">
+                <i class="fa-solid fa-envelope"></i>
+                <input id="login-email" name="email" type="email" autocomplete="email" required />
+              </div>
+
+              <label for="login-password">Senha</label>
+              <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input id="login-password" name="password" type="password" autocomplete="current-password" required />
+
+                <button type="button" class="toggle-password" data-target="login-password" aria-label="Mostrar senha">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+
+              <button type="submit" class="btn">Entrar</button>
+            </form>
+
+            <form id="panel-register" class="form form-panel" novalidate>
+              <h2>Criar conta</h2>
+              <p class="form-subtitle">Comece a organizar seu negócio.</p>
+
+              <label for="register-name">Nome</label>
+              <div class="input-group">
+                <i class="fa-solid fa-user"></i>
+                <input id="register-name" name="name" type="text" autocomplete="name" required />
+              </div>
+
+              <label for="register-email">E-mail</label>
+              <div class="input-group">
+                <i class="fa-solid fa-envelope"></i>
+                <input id="register-email" name="email" type="email" autocomplete="email" required />
+              </div>
+
+              <label for="register-password">Senha</label>
+              <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input id="register-password" name="password" type="password" autocomplete="new-password" required />
+
+                <button type="button" class="toggle-password" data-target="register-password" aria-label="Mostrar senha">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+
+              <label for="register-confirm">Confirmar senha</label>
+              <div class="input-group">
+                <i class="fa-solid fa-shield-heart"></i>
+                <input id="register-confirm" name="confirmPassword" type="password" autocomplete="new-password" required />
+
+                <button type="button" class="toggle-password" data-target="register-confirm" aria-label="Mostrar senha">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+
+              <button type="submit" class="btn">Criar conta</button>
+            </form>
+
+          </div>
+        </div>
+
+        <div id="auth-message" class="message" hidden></div>
+
+        <div id="session-box" class="session" hidden>
+          <p id="session-text"></p>
+          <button id="logout-btn" class="btn btn-secondary" type="button">Sair</button>
+        </div>
+      </section>
+
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
