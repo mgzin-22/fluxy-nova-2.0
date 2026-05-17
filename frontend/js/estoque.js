@@ -1,4 +1,4 @@
-const API = "http://localhost:3000/products";
+const API = "https://fluxy-api-r0lt.onrender.com/products";
 const TOKEN_KEY = "fluxy_token";
 const USER_KEY = "fluxy_user";
 const THEME_KEY = "fluxy_theme";
