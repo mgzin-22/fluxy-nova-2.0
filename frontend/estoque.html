@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="styles/dashboard.css" />
   <link rel="stylesheet" href="styles/estoque.css" />
 </head>
+
 <body>
   <aside class="sidebar">
     <div>
@@ -53,8 +54,8 @@
     </button>
   </aside>
 
-  <main class="dashboard">
-    <header class="topbar">
+  <main class="dashboard estoque-page">
+    <header class="topbar estoque-topbar">
       <div>
         <h1>Estoque</h1>
         <p>Cadastre e acompanhe os produtos do seu negócio.</p>
@@ -63,29 +64,105 @@
       <button id="toggle-theme" class="theme-btn" type="button">🌙</button>
     </header>
 
-    <section class="panel">
-      <h2>Novo produto</h2>
+    <section class="stock-panel product-form-panel">
+      <div class="section-title">
+        <span class="section-icon">
+          <i data-lucide="package-plus"></i>
+        </span>
 
-      <form id="form-produto">
-        <label for="nome">Nome do produto</label>
-        <input id="nome" type="text" placeholder="Ex: Camiseta" required />
+        <div>
+          <h2>Novo produto</h2>
+          <p>Adicione produtos ao estoque da sua Fluxy.</p>
+        </div>
+      </div>
 
-        <label for="preco">Preço</label>
-        <input id="preco" type="number" step="0.01" placeholder="Ex: 59.90" required />
+      <form id="form-produto" class="product-form">
+        <div class="form-group">
+          <label for="nome">Nome do produto</label>
+          <input id="nome" type="text" placeholder="Ex: Camiseta Básica" required />
+        </div>
 
-        <label for="estoque">Quantidade em estoque</label>
-        <input id="estoque" type="number" placeholder="Ex: 20" required />
+        <div class="form-group">
+          <label for="categoria">Categoria</label>
+          <select id="categoria" required>
+            <option value="">Selecione</option>
+            <option value="Eletrônicos">Eletrônicos</option>
+            <option value="Roupas">Roupas</option>
+            <option value="Alimentos">Alimentos</option>
+            <option value="Acessórios">Acessórios</option>
+            <option value="Serviços">Serviços</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
 
-        <label for="minimo">Estoque mínimo</label>
-        <input id="minimo" type="number" placeholder="Ex: 5" />
+        <div class="form-group">
+          <label for="preco">Preço</label>
+          <input id="preco" type="number" step="0.01" min="0" placeholder="Ex: 59.90" required />
+        </div>
 
-        <button type="submit">Salvar produto</button>
+        <div class="form-group">
+          <label for="estoque">Quantidade</label>
+          <input id="estoque" type="number" min="0" placeholder="Ex: 20" required />
+        </div>
+
+        <div class="form-group">
+          <label for="minimo">Estoque mínimo</label>
+          <input id="minimo" type="number" min="0" placeholder="Ex: 5" />
+        </div>
+
+        <button type="submit" class="save-product-btn">Salvar produto</button>
       </form>
+
+      <p id="estoque-feedback" class="feedback"></p>
     </section>
 
-    <section class="panel">
-      <h2>Produtos</h2>
-      <div id="lista-produtos"></div>
+    <section class="stock-panel products-panel">
+      <div class="products-header">
+        <div class="section-title">
+          <span class="section-icon soft">
+            <i data-lucide="clipboard-list"></i>
+          </span>
+
+          <div>
+            <h2>Produtos cadastrados</h2>
+            <p id="products-count">Nenhum produto cadastrado</p>
+          </div>
+        </div>
+
+        <div class="stock-filters">
+          <div class="search-box">
+            <i data-lucide="search"></i>
+            <input id="buscar-produto" type="text" placeholder="Buscar produto..." />
+          </div>
+
+          <select id="filtro-categoria">
+            <option value="todas">Todas as categorias</option>
+            <option value="Eletrônicos">Eletrônicos</option>
+            <option value="Roupas">Roupas</option>
+            <option value="Alimentos">Alimentos</option>
+            <option value="Acessórios">Acessórios</option>
+            <option value="Serviços">Serviços</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Categoria</th>
+              <th>Preço</th>
+              <th>Estoque</th>
+              <th>Estoque mínimo</th>
+              <th>Situação</th>
+            </tr>
+          </thead>
+
+          <tbody id="lista-produtos"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 

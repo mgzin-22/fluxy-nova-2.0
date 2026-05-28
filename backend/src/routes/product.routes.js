@@ -9,38 +9,54 @@ router.use(authMiddleware);
 
 // LISTAR PRODUTOS
 router.get("/", async (req, res) => {
-  const products = await prisma.product.findMany({
-    where: { userId: req.userId },
-    orderBy: { createdAt: "desc" }
-  });
+  try {
+    const products = await prisma.product.findMany({
+      where: { userId: req.userId },
+      orderBy: { createdAt: "desc" }
+    });
 
-  res.json(products);
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // CRIAR PRODUTO
 router.post("/", async (req, res) => {
-  const { name, price, stock, minStock } = req.body;
+  try {
+    const { name, category, price, stock, minStock } = req.body;
 
-  const product = await prisma.product.create({
-    data: {
-      name,
-      price: Number(price),
-      stock: Number(stock),
-      minStock: minStock ? Number(minStock) : null,
-      userId: req.userId
-    }
-  });
+    const product = await prisma.product.create({
+      data: {
+        name,
+        category,
+        price: Number(price),
+        stock: Number(stock),
+        minStock: minStock ? Number(minStock) : null,
+        userId: req.userId
+      }
+    });
 
-  res.json(product);
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// DELETAR
+// DELETAR PRODUTO
 router.delete("/:id", async (req, res) => {
-  await prisma.product.delete({
-    where: { id: req.params.id }
-  });
+  try {
+    await prisma.product.delete({
+      where: {
+        id: req.params.id,
+        userId: req.userId
+      }
+    });
 
-  res.json({ message: "Produto removido" });
+    res.json({ message: "Produto removido" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 module.exports = router;

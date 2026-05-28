@@ -33,12 +33,13 @@ model Venda {
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  price       Float
-  stock       Int
-  minStock    Int?
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  name      String
+  category  String?
+  price     Float
+  stock     Int
+  minStock  Int?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }
