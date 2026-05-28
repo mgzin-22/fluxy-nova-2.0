@@ -81,7 +81,9 @@
 .product-form input,
 .product-form select,
 .stock-filters input,
-.stock-filters select {
+.stock-filters select,
+.modal-form input,
+.modal-form select {
   height: 50px;
   width: 100%;
   border-radius: 12px;
@@ -92,21 +94,19 @@
   font: inherit;
 }
 
-.product-form input::placeholder,
-.stock-filters input::placeholder {
-  color: color-mix(in srgb, var(--muted) 75%, transparent);
-}
-
 .product-form input:focus,
 .product-form select:focus,
 .stock-filters input:focus,
-.stock-filters select:focus {
+.stock-filters select:focus,
+.modal-form input:focus,
+.modal-form select:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.16);
 }
 
-.save-product-btn {
+.save-product-btn,
+.modal-save-btn {
   height: 50px;
   min-width: 170px;
   border: none;
@@ -120,7 +120,8 @@
   transition: 0.2s ease;
 }
 
-.save-product-btn:hover {
+.save-product-btn:hover,
+.modal-save-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(26, 188, 156, 0.22);
 }
@@ -171,7 +172,7 @@
 .products-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 880px;
+  min-width: 980px;
 }
 
 .products-table thead {
@@ -271,14 +272,150 @@
   background: rgba(239, 68, 68, 0.16);
 }
 
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--card-strong);
+  transition: 0.2s ease;
+}
+
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-btn.edit {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.icon-btn.delete {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.14);
+}
+
+.icon-btn:hover {
+  transform: translateY(-2px);
+}
+
+.icon-btn.ghost {
+  background: transparent;
+}
+
 .empty-row td {
   text-align: center;
   padding: 24px;
   color: var(--muted);
 }
 
-.feedback {
-  margin-top: 14px;
+/* MODAIS */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.modal-overlay[hidden] {
+  display: none !important;
+}
+
+.modal-card {
+  width: min(520px, 100%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.modal-header h2,
+.delete-card h2 {
+  margin: 0;
+}
+
+.modal-header p,
+.delete-card p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.modal-form {
+  display: grid;
+  gap: 14px;
+}
+
+.delete-card {
+  text-align: center;
+}
+
+.delete-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  margin: 0 auto 16px;
+  display: grid;
+  place-items: center;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.14);
+}
+
+.delete-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.cancel-btn,
+.delete-confirm-btn {
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  color: var(--text);
+  background: var(--card-strong);
+  border: 1px solid var(--border);
+}
+
+.delete-confirm-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
 }
 
 @media (max-width: 1180px) {
@@ -318,5 +455,9 @@
 
   .stock-filters select {
     width: 100%;
+  }
+
+  .modal-actions {
+    flex-direction: column;
   }
 }

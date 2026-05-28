@@ -26,6 +26,12 @@ router.post("/", async (req, res) => {
   try {
     const { name, category, price, stock, minStock } = req.body;
 
+    if (!name || !category || price === undefined || stock === undefined) {
+      return res.status(400).json({
+        error: "Preencha nome, categoria, preço e estoque."
+      });
+    }
+
     const product = await prisma.product.create({
       data: {
         name,
@@ -34,6 +40,41 @@ router.post("/", async (req, res) => {
         stock: Number(stock),
         minStock: minStock ? Number(minStock) : null,
         userId: req.userId
+      }
+    });
+
+    res.status(201).json(product);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// EDITAR PRODUTO
+router.put("/:id", async (req, res) => {
+  try {
+    const { name, category, price, stock, minStock } = req.body;
+
+    const productExists = await prisma.product.findFirst({
+      where: {
+        id: req.params.id,
+        userId: req.userId
+      }
+    });
+
+    if (!productExists) {
+      return res.status(404).json({ error: "Produto não encontrado." });
+    }
+
+    const product = await prisma.product.update({
+      where: {
+        id: req.params.id
+      },
+      data: {
+        name,
+        category,
+        price: Number(price),
+        stock: Number(stock),
+        minStock: minStock ? Number(minStock) : null
       }
     });
 
@@ -46,14 +87,24 @@ router.post("/", async (req, res) => {
 // DELETAR PRODUTO
 router.delete("/:id", async (req, res) => {
   try {
-    await prisma.product.delete({
+    const productExists = await prisma.product.findFirst({
       where: {
         id: req.params.id,
         userId: req.userId
       }
     });
 
-    res.json({ message: "Produto removido" });
+    if (!productExists) {
+      return res.status(404).json({ error: "Produto não encontrado." });
+    }
+
+    await prisma.product.delete({
+      where: {
+        id: req.params.id
+      }
+    });
+
+    res.json({ message: "Produto removido com sucesso." });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

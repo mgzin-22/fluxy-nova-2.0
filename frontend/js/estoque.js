@@ -20,7 +20,25 @@ const minimoInput = document.getElementById("minimo");
 const buscarProdutoInput = document.getElementById("buscar-produto");
 const filtroCategoriaInput = document.getElementById("filtro-categoria");
 
+const editModal = document.getElementById("edit-modal");
+const deleteModal = document.getElementById("delete-modal");
+
+const closeEditModalBtn = document.getElementById("close-edit-modal");
+const formEditarProduto = document.getElementById("form-editar-produto");
+
+const editIdInput = document.getElementById("edit-id");
+const editNomeInput = document.getElementById("edit-nome");
+const editCategoriaInput = document.getElementById("edit-categoria");
+const editPrecoInput = document.getElementById("edit-preco");
+const editEstoqueInput = document.getElementById("edit-estoque");
+const editMinimoInput = document.getElementById("edit-minimo");
+
+const cancelDeleteBtn = document.getElementById("cancel-delete");
+const confirmDeleteBtn = document.getElementById("confirm-delete");
+const deleteProductText = document.getElementById("delete-product-text");
+
 let produtosGlobais = [];
+let produtoParaDeletar = null;
 
 if (!token) {
   window.location.href = "auth.html";
@@ -130,7 +148,7 @@ function renderizarProdutos() {
   if (!produtos.length) {
     lista.innerHTML = `
       <tr class="empty-row">
-        <td colspan="6">Nenhum produto encontrado.</td>
+        <td colspan="7">Nenhum produto encontrado.</td>
       </tr>
     `;
     return;
@@ -169,10 +187,26 @@ function renderizarProdutos() {
       <td>
         <span class="status-badge ${status.type}">${status.label}</span>
       </td>
+
+      <td>
+        <div class="actions">
+          <button class="icon-btn edit" type="button" title="Editar produto" onclick="abrirModalEditar('${p.id}')">
+            <i data-lucide="pencil"></i>
+          </button>
+
+          <button class="icon-btn delete" type="button" title="Excluir produto" onclick="abrirModalDeletar('${p.id}')">
+            <i data-lucide="trash-2"></i>
+          </button>
+        </div>
+      </td>
     `;
 
     lista.appendChild(row);
   });
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 }
 
 async function carregarProdutos() {
@@ -238,8 +272,133 @@ formProduto.addEventListener("submit", async (e) => {
   }
 });
 
+function abrirModalEditar(id) {
+  const produto = produtosGlobais.find((item) => item.id === id);
+
+  if (!produto) return;
+
+  editIdInput.value = produto.id;
+  editNomeInput.value = produto.name;
+  editCategoriaInput.value = produto.category || "Outros";
+  editPrecoInput.value = produto.price;
+  editEstoqueInput.value = produto.stock;
+  editMinimoInput.value = produto.minStock ?? "";
+
+  editModal.hidden = false;
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
+function fecharModalEditar() {
+  editModal.hidden = true;
+  formEditarProduto.reset();
+}
+
+formEditarProduto.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const id = editIdInput.value;
+
+  const body = {
+    name: editNomeInput.value.trim(),
+    category: editCategoriaInput.value,
+    price: editPrecoInput.value,
+    stock: editEstoqueInput.value,
+    minStock: editMinimoInput.value
+  };
+
+  try {
+    const response = await fetch(`${API}/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      showFeedback(result.error || "Erro ao editar produto.", "error");
+      return;
+    }
+
+    fecharModalEditar();
+    showFeedback("Produto atualizado com sucesso!");
+    await carregarProdutos();
+  } catch (error) {
+    console.error(error);
+    showFeedback("Erro ao conectar com servidor.", "error");
+  }
+});
+
+function abrirModalDeletar(id) {
+  const produto = produtosGlobais.find((item) => item.id === id);
+
+  if (!produto) return;
+
+  produtoParaDeletar = produto;
+
+  deleteProductText.textContent = `Tem certeza que deseja excluir "${produto.name}"?`;
+  deleteModal.hidden = false;
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
+function fecharModalDeletar() {
+  deleteModal.hidden = true;
+  produtoParaDeletar = null;
+}
+
+confirmDeleteBtn.addEventListener("click", async () => {
+  if (!produtoParaDeletar) return;
+
+  try {
+    const response = await fetch(`${API}/${produtoParaDeletar.id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      showFeedback(result.error || "Erro ao excluir produto.", "error");
+      return;
+    }
+
+    fecharModalDeletar();
+    showFeedback("Produto excluído com sucesso!");
+    await carregarProdutos();
+  } catch (error) {
+    console.error(error);
+    showFeedback("Erro ao conectar com servidor.", "error");
+  }
+});
+
 buscarProdutoInput.addEventListener("input", renderizarProdutos);
 filtroCategoriaInput.addEventListener("change", renderizarProdutos);
+
+closeEditModalBtn.addEventListener("click", fecharModalEditar);
+cancelDeleteBtn.addEventListener("click", fecharModalDeletar);
+
+editModal.addEventListener("click", (event) => {
+  if (event.target === editModal) {
+    fecharModalEditar();
+  }
+});
+
+deleteModal.addEventListener("click", (event) => {
+  if (event.target === deleteModal) {
+    fecharModalDeletar();
+  }
+});
 
 function sair() {
   localStorage.removeItem(TOKEN_KEY);
