@@ -8,28 +8,35 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  name        String
-  email       String   @unique
-  password    String
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  password     String
   businessName String?
   businessType String?
   monthlyGoal  Float?
-  createdAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
 
-  vendas      Venda[]
+  vendas   Venda[]
   products Product[]
 }
 
 model Venda {
-  id        String   @id @default(uuid())
-  produto   String
-  valor     Float
-  pagamento String
-  createdAt DateTime @default(now())
+  id            String   @id @default(uuid())
+  produto       String
+  categoria     String?
+  quantidade    Int      @default(1)
+  precoUnitario Float    @default(0)
+  valor         Float
+  pagamento     String
+  status        String   @default("Concluída")
+  createdAt     DateTime @default(now())
 
-  userId String
-  user   User @relation(fields: [userId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
 }
 
 model Product {
@@ -43,4 +50,6 @@ model Product {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+
+  vendas    Venda[]
 }
