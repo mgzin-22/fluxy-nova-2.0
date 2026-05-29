@@ -16,9 +16,13 @@ const categoriaInput = document.getElementById("categoria");
 const precoInput = document.getElementById("preco");
 const estoqueInput = document.getElementById("estoque");
 const minimoInput = document.getElementById("minimo");
+const imagemProdutoInput = document.getElementById("imagem-produto");
+const imagePreview = document.getElementById("image-preview");
+const imageLabel = document.getElementById("image-label");
 
 const buscarProdutoInput = document.getElementById("buscar-produto");
 const filtroCategoriaInput = document.getElementById("filtro-categoria");
+const categoriasList = document.getElementById("categorias-list");
 
 const editModal = document.getElementById("edit-modal");
 const deleteModal = document.getElementById("delete-modal");
@@ -32,6 +36,8 @@ const editCategoriaInput = document.getElementById("edit-categoria");
 const editPrecoInput = document.getElementById("edit-preco");
 const editEstoqueInput = document.getElementById("edit-estoque");
 const editMinimoInput = document.getElementById("edit-minimo");
+const editImagemProdutoInput = document.getElementById("edit-imagem-produto");
+const editImagePreview = document.getElementById("edit-image-preview");
 
 const cancelDeleteBtn = document.getElementById("cancel-delete");
 const confirmDeleteBtn = document.getElementById("confirm-delete");
@@ -39,6 +45,8 @@ const deleteProductText = document.getElementById("delete-product-text");
 
 let produtosGlobais = [];
 let produtoParaDeletar = null;
+let imagemBase64 = null;
+let editImagemBase64 = null;
 
 if (!token) {
   window.location.href = "auth.html";
@@ -46,7 +54,6 @@ if (!token) {
 
 function aplicarTemaSalvo() {
   const savedTheme = localStorage.getItem(THEME_KEY) || "dark";
-
   document.body.classList.toggle("light", savedTheme === "light");
 
   if (themeBtn) {
@@ -58,7 +65,6 @@ function alternarTema() {
   document.body.classList.toggle("light");
 
   const isLight = document.body.classList.contains("light");
-
   localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
 
   if (themeBtn) {
@@ -83,6 +89,36 @@ function showFeedback(message, type = "success") {
     feedback.textContent = "";
     feedback.className = "feedback";
   }, 2500);
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      resolve(null);
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Erro ao ler imagem."));
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPreview(container, imageUrl) {
+  if (!container) return;
+
+  if (imageUrl) {
+    container.innerHTML = `<img src="${imageUrl}" alt="Preview do produto">`;
+  } else {
+    container.innerHTML = `<i data-lucide="image-plus"></i>`;
+  }
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 }
 
 function getProductInitial(name) {
@@ -115,13 +151,44 @@ function getStockStatus(product) {
   };
 }
 
+function obterCategoriasUnicas() {
+  return [...new Set(
+    produtosGlobais
+      .map((produto) => produto.category)
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+function atualizarCategorias() {
+  const categorias = obterCategoriasUnicas();
+  const categoriaSelecionada = filtroCategoriaInput.value;
+
+  filtroCategoriaInput.innerHTML = `<option value="todas">Todas as categorias</option>`;
+  categoriasList.innerHTML = "";
+
+  categorias.forEach((categoria) => {
+    const optionFiltro = document.createElement("option");
+    optionFiltro.value = categoria;
+    optionFiltro.textContent = categoria;
+    filtroCategoriaInput.appendChild(optionFiltro);
+
+    const optionDatalist = document.createElement("option");
+    optionDatalist.value = categoria;
+    categoriasList.appendChild(optionDatalist);
+  });
+
+  if ([...filtroCategoriaInput.options].some((option) => option.value === categoriaSelecionada)) {
+    filtroCategoriaInput.value = categoriaSelecionada;
+  }
+}
+
 function filtrarProdutos() {
   const termo = buscarProdutoInput.value.trim().toLowerCase();
   const categoria = filtroCategoriaInput.value;
 
   return produtosGlobais.filter((produto) => {
     const nome = produto.name.toLowerCase();
-    const categoriaProduto = produto.category || "Outros";
+    const categoriaProduto = produto.category || "Sem categoria";
 
     const bateNome = nome.includes(termo);
     const bateCategoria = categoria === "todas" || categoriaProduto === categoria;
@@ -131,6 +198,8 @@ function filtrarProdutos() {
 }
 
 function renderizarProdutos() {
+  atualizarCategorias();
+
   const produtos = filtrarProdutos();
 
   lista.innerHTML = "";
@@ -156,14 +225,18 @@ function renderizarProdutos() {
 
   produtos.forEach((p) => {
     const status = getStockStatus(p);
-    const categoria = p.category || "Outros";
+    const categoria = p.category || "Sem categoria";
 
     const row = document.createElement("tr");
+
+    const avatarContent = p.imageUrl
+      ? `<img src="${p.imageUrl}" alt="${p.name}">`
+      : getProductInitial(p.name);
 
     row.innerHTML = `
       <td>
         <div class="product-main">
-          <div class="product-avatar">${getProductInitial(p.name)}</div>
+          <div class="product-avatar">${avatarContent}</div>
 
           <div class="product-info">
             <strong>${p.name}</strong>
@@ -230,19 +303,47 @@ async function carregarProdutos() {
   }
 }
 
+imagemProdutoInput.addEventListener("change", async () => {
+  const file = imagemProdutoInput.files[0];
+
+  if (!file) {
+    imagemBase64 = null;
+    renderPreview(imagePreview, null);
+    imageLabel.textContent = "Selecionar imagem";
+    return;
+  }
+
+  imagemBase64 = await fileToBase64(file);
+  renderPreview(imagePreview, imagemBase64);
+  imageLabel.textContent = "Imagem selecionada";
+});
+
+editImagemProdutoInput.addEventListener("change", async () => {
+  const file = editImagemProdutoInput.files[0];
+
+  if (!file) {
+    editImagemBase64 = null;
+    return;
+  }
+
+  editImagemBase64 = await fileToBase64(file);
+  renderPreview(editImagePreview, editImagemBase64);
+});
+
 formProduto.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const body = {
     name: nomeInput.value.trim(),
-    category: categoriaInput.value,
+    category: categoriaInput.value.trim(),
     price: precoInput.value,
     stock: estoqueInput.value,
-    minStock: minimoInput.value
+    minStock: minimoInput.value,
+    imageBase64: imagemBase64
   };
 
   if (!body.name || !body.category || !body.price || body.stock === "") {
-    showFeedback("Preencha todos os campos obrigatórios.", "error");
+    showFeedback("Preencha nome, categoria, preço e estoque.", "error");
     return;
   }
 
@@ -264,6 +365,10 @@ formProduto.addEventListener("submit", async (e) => {
     }
 
     formProduto.reset();
+    imagemBase64 = null;
+    renderPreview(imagePreview, null);
+    imageLabel.textContent = "Selecionar imagem";
+
     showFeedback("Produto salvo com sucesso!");
     await carregarProdutos();
   } catch (error) {
@@ -277,12 +382,17 @@ function abrirModalEditar(id) {
 
   if (!produto) return;
 
+  editImagemBase64 = null;
+
   editIdInput.value = produto.id;
   editNomeInput.value = produto.name;
-  editCategoriaInput.value = produto.category || "Outros";
+  editCategoriaInput.value = produto.category || "";
   editPrecoInput.value = produto.price;
   editEstoqueInput.value = produto.stock;
   editMinimoInput.value = produto.minStock ?? "";
+  editImagemProdutoInput.value = "";
+
+  renderPreview(editImagePreview, produto.imageUrl || null);
 
   editModal.hidden = false;
 
@@ -294,6 +404,7 @@ function abrirModalEditar(id) {
 function fecharModalEditar() {
   editModal.hidden = true;
   formEditarProduto.reset();
+  editImagemBase64 = null;
 }
 
 formEditarProduto.addEventListener("submit", async (e) => {
@@ -303,11 +414,17 @@ formEditarProduto.addEventListener("submit", async (e) => {
 
   const body = {
     name: editNomeInput.value.trim(),
-    category: editCategoriaInput.value,
+    category: editCategoriaInput.value.trim(),
     price: editPrecoInput.value,
     stock: editEstoqueInput.value,
-    minStock: editMinimoInput.value
+    minStock: editMinimoInput.value,
+    imageBase64: editImagemBase64
   };
+
+  if (!body.name || !body.category || !body.price || body.stock === "") {
+    showFeedback("Preencha nome, categoria, preço e estoque.", "error");
+    return;
+  }
 
   try {
     const response = await fetch(`${API}/${id}`, {

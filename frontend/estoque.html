@@ -84,15 +84,8 @@
 
         <div class="form-group">
           <label for="categoria">Categoria</label>
-          <select id="categoria" required>
-            <option value="">Selecione</option>
-            <option value="Eletrônicos">Eletrônicos</option>
-            <option value="Roupas">Roupas</option>
-            <option value="Alimentos">Alimentos</option>
-            <option value="Acessórios">Acessórios</option>
-            <option value="Serviços">Serviços</option>
-            <option value="Outros">Outros</option>
-          </select>
+          <input id="categoria" type="text" list="categorias-list" placeholder="Ex: Eletrônicos" required />
+          <datalist id="categorias-list"></datalist>
         </div>
 
         <div class="form-group">
@@ -108,6 +101,18 @@
         <div class="form-group">
           <label for="minimo">Estoque mínimo</label>
           <input id="minimo" type="number" min="0" placeholder="Ex: 5" />
+        </div>
+
+        <div class="form-group image-form-group">
+          <label for="imagem-produto">Imagem</label>
+
+          <label class="image-upload-box" for="imagem-produto">
+            <input id="imagem-produto" type="file" accept="image/*" hidden />
+            <span id="image-preview" class="image-preview">
+              <i data-lucide="image-plus"></i>
+            </span>
+            <small id="image-label">Selecionar imagem</small>
+          </label>
         </div>
 
         <button type="submit" class="save-product-btn">Salvar produto</button>
@@ -137,12 +142,6 @@
 
           <select id="filtro-categoria">
             <option value="todas">Todas as categorias</option>
-            <option value="Eletrônicos">Eletrônicos</option>
-            <option value="Roupas">Roupas</option>
-            <option value="Alimentos">Alimentos</option>
-            <option value="Acessórios">Acessórios</option>
-            <option value="Serviços">Serviços</option>
-            <option value="Outros">Outros</option>
           </select>
         </div>
       </div>
@@ -191,14 +190,7 @@
 
         <div class="form-group">
           <label for="edit-categoria">Categoria</label>
-          <select id="edit-categoria" required>
-            <option value="Eletrônicos">Eletrônicos</option>
-            <option value="Roupas">Roupas</option>
-            <option value="Alimentos">Alimentos</option>
-            <option value="Acessórios">Acessórios</option>
-            <option value="Serviços">Serviços</option>
-            <option value="Outros">Outros</option>
-          </select>
+          <input id="edit-categoria" type="text" list="categorias-list" required />
         </div>
 
         <div class="form-group">
@@ -214,6 +206,18 @@
         <div class="form-group">
           <label for="edit-minimo">Estoque mínimo</label>
           <input id="edit-minimo" type="number" min="0" />
+        </div>
+
+        <div class="form-group">
+          <label for="edit-imagem-produto">Imagem do produto</label>
+
+          <label class="edit-image-box" for="edit-imagem-produto">
+            <input id="edit-imagem-produto" type="file" accept="image/*" hidden />
+            <span id="edit-image-preview" class="image-preview">
+              <i data-lucide="image-plus"></i>
+            </span>
+            <small>Trocar imagem</small>
+          </label>
         </div>
 
         <button type="submit" class="modal-save-btn">Salvar alterações</button>
