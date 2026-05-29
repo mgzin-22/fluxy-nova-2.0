@@ -13,12 +13,13 @@
 
   <link rel="stylesheet" href="styles/dashboard.css" />
   <link rel="stylesheet" href="styles/estoque.css" />
+  <link rel="stylesheet" href="styles/notifications.css" />
 </head>
 
 <body>
   <aside class="sidebar">
     <div>
-      <img src="assets/logo.png" alt="Fluxy" class="logo" />
+      <img src="assets/icone.png" alt="Fluxy" class="logo" />
 
       <nav>
         <a href="dashboard.html">
@@ -26,7 +27,7 @@
           <span class="nav-text">Dashboard</span>
         </a>
 
-        <a href="#">
+        <a href="vendas.html">
           <i data-lucide="shopping-cart" class="nav-icon"></i>
           <span class="nav-text">Vendas</span>
         </a>
@@ -36,14 +37,14 @@
           <span class="nav-text">Estoque</span>
         </a>
 
-        <a href="#">
+        <a href="relatorios.html">
           <i data-lucide="bar-chart-3" class="nav-icon"></i>
           <span class="nav-text">Relatórios</span>
         </a>
 
         <a href="perfil.html">
-          <i data-lucide="user-round-cog" class="nav-icon"></i>
-          <span class="nav-text">Perfil</span>
+          <i data-lucide="settings" class="nav-icon"></i>
+          <span class="nav-text">Configurações</span>
         </a>
       </nav>
     </div>
@@ -242,6 +243,9 @@
     </div>
   </div>
 
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="js/notifications.js"></script>
   <script src="js/estoque.js"></script>
 </body>
 </html>

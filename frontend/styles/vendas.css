@@ -30,6 +30,7 @@
 .sales-card-icon {
   width: 58px;
   height: 58px;
+  min-width: 58px;
   border-radius: 14px;
   display: grid;
   place-items: center;
@@ -90,6 +91,7 @@
   color: var(--primary);
   width: 20px;
   height: 20px;
+  min-width: 20px;
 }
 
 .stock-alert p {
@@ -133,11 +135,17 @@
 .section-icon {
   width: 44px;
   height: 44px;
+  min-width: 44px;
   border-radius: 12px;
   display: grid;
   place-items: center;
   color: var(--primary);
   background: rgba(52, 152, 219, 0.14);
+}
+
+.section-icon.soft {
+  color: var(--primary);
+  background: rgba(52, 152, 219, 0.12);
 }
 
 .section-icon svg {
@@ -166,7 +174,8 @@
 .sale-form input,
 .sale-form select,
 .history-header input,
-.history-header select {
+.history-header select,
+.custom-date-box input {
   height: 50px;
   width: 100%;
   border-radius: 12px;
@@ -180,7 +189,8 @@
 .sale-form input:focus,
 .sale-form select:focus,
 .history-header input:focus,
-.history-header select:focus {
+.history-header select:focus,
+.custom-date-box input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.16);
@@ -189,6 +199,11 @@
 .sale-form input:disabled {
   opacity: 0.8;
   cursor: not-allowed;
+}
+
+.sale-form select option,
+.history-header select option {
+  color: #0f172a;
 }
 
 .register-sale-btn {
@@ -219,12 +234,21 @@
   box-shadow: 0 10px 24px rgba(26, 188, 156, 0.22);
 }
 
+.history-title {
+  margin-bottom: 12px;
+}
+
 .history-header {
   display: grid;
   grid-template-columns: 1fr auto 230px;
   gap: 14px;
   align-items: center;
   margin-bottom: 16px;
+}
+
+.advanced-filters {
+  grid-template-columns: 1fr 220px 220px 220px;
+  margin-bottom: 14px;
 }
 
 .search-box {
@@ -253,6 +277,11 @@
   overflow: hidden;
 }
 
+.sales-period-filters {
+  margin-bottom: 14px;
+  width: fit-content;
+}
+
 .period-btn {
   height: 44px;
   border: none;
@@ -263,15 +292,68 @@
   font-weight: 700;
   cursor: pointer;
   border-right: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.2s ease;
 }
 
 .period-btn:last-child {
   border-right: none;
 }
 
-.period-btn.active {
+.period-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.period-btn.active,
+.period-btn:hover {
   color: #fff;
   background: linear-gradient(135deg, var(--primary), #0f72d8);
+}
+
+.custom-date-box {
+  display: flex;
+  align-items: end;
+  gap: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+  border-radius: 16px;
+  background: var(--card-strong);
+  border: 1px solid var(--border);
+}
+
+.custom-date-box[hidden] {
+  display: none !important;
+}
+
+.custom-date-box .form-group {
+  min-width: 180px;
+}
+
+.custom-date-box input {
+  height: 46px;
+  background: var(--card);
+}
+
+.apply-date-btn {
+  height: 46px;
+  border: none;
+  border-radius: 12px;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 800;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  transition: 0.2s ease;
+}
+
+.apply-date-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(26, 188, 156, 0.22);
 }
 
 .table-wrapper {
@@ -385,6 +467,82 @@
   padding: 26px;
 }
 
+/* PAGINAÇÃO MELHORADA */
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.pagination button {
+  height: 42px;
+  min-width: 118px;
+  border: 1px solid rgba(52, 152, 219, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  padding: 0 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.25s ease;
+  backdrop-filter: blur(14px);
+}
+
+.pagination button:hover:not(:disabled) {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(26, 188, 156, 0.18);
+}
+
+.pagination button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.pagination button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border);
+  color: var(--muted);
+  box-shadow: none;
+}
+
+.pagination button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.pagination span {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(14px);
+}
+
+body.light .pagination button,
+body.light .pagination span {
+  background: rgba(255, 255, 255, 0.85);
+}
+
 @media (max-width: 1200px) {
   .sales-cards {
     grid-template-columns: repeat(2, 1fr);
@@ -398,13 +556,19 @@
     width: 100%;
   }
 
-  .history-header {
-    grid-template-columns: 1fr;
+  .history-header,
+  .advanced-filters {
+    grid-template-columns: 1fr 1fr;
   }
 
-  .period-filters {
+  .period-filters,
+  .sales-period-filters {
     width: 100%;
     overflow-x: auto;
+  }
+
+  .custom-date-box {
+    flex-wrap: wrap;
   }
 }
 
@@ -421,7 +585,38 @@
     padding: 18px;
   }
 
+  .advanced-filters {
+    grid-template-columns: 1fr;
+  }
+
   .period-btn {
     min-width: 110px;
+  }
+
+  .custom-date-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .custom-date-box .form-group {
+    min-width: 100%;
+  }
+
+  .apply-date-btn {
+    width: 100%;
+  }
+
+  .pagination {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .pagination button {
+    min-width: 135px;
+  }
+
+  .pagination span {
+    order: -1;
+    width: 100%;
   }
 }

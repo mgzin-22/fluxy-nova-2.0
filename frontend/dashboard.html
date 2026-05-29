@@ -8,18 +8,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  
+
   <link rel="stylesheet" href="styles/dashboard.css" />
+  <link rel="stylesheet" href="styles/notifications.css" />
+
   <script src="https://unpkg.com/lucide@latest"></script>
-  
 </head>
+
 <body>
   <aside class="sidebar">
     <div>
       <img src="assets/icone.png" alt="Fluxy" class="logo" />
 
       <nav>
-        <a class="active" href="#">
+        <a class="active" href="dashboard.html">
           <i data-lucide="layout-dashboard" class="nav-icon"></i>
           <span class="nav-text">Dashboard</span>
         </a>
@@ -40,8 +42,8 @@
         </a>
 
         <a href="perfil.html">
-          <i data-lucide="user-round-cog" class="nav-icon"></i>
-          <span class="nav-text">Perfil</span>
+          <i data-lucide="settings" class="nav-icon"></i>
+          <span class="nav-text">Configurações</span>
         </a>
       </nav>
     </div>
@@ -52,115 +54,231 @@
     </button>
   </aside>
 
-  <main class="dashboard">
-    <header class="topbar">
+  <main class="dashboard dashboard-page">
+    <header class="topbar dashboard-topbar">
       <div>
         <h1>Dashboard</h1>
-        <p id="user-name">Bem-vindo(a) à Fluxy</p>
+        <p id="user-name">Visão geral do seu negócio</p>
       </div>
 
-      <button id="toggle-theme" class="theme-btn" type="button">🌙</button>
+      <div class="topbar-actions">
+        <button id="toggle-theme" class="theme-btn" type="button">🌙</button>
+
+        <div class="notification-wrapper">
+          <button id="notification-btn" class="notification-btn" type="button" title="Notificações">
+            <i data-lucide="bell"></i>
+            <span id="alert-count">0</span>
+          </button>
+
+          <div id="notification-dropdown" class="notification-dropdown" hidden>
+            <div class="notification-header">
+              <div>
+                <h3>Notificações</h3>
+                <p>Alertas importantes do seu negócio</p>
+              </div>
+
+              <button id="close-notifications" type="button">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+
+            <div id="notification-list" class="notification-list"></div>
+          </div>
+        </div>
+      </div>
     </header>
 
-    <section class="cards">
-      <article class="card">
-        <span>Total vendido</span>
-        <strong id="total-geral">R$ 0,00</strong>
+    <section class="dashboard-cards">
+      <article class="metric-card featured">
+        <div class="metric-icon blue">
+          <i data-lucide="badge-dollar-sign"></i>
+        </div>
+
+        <div>
+          <span>Total vendido</span>
+          <strong id="total-vendido">R$ 0,00</strong>
+          <small id="total-periodo-label">No período selecionado</small>
+        </div>
       </article>
 
-      <article class="card">
-        <span>Quantidade de vendas</span>
-        <strong id="total-qtd">0</strong>
+      <article class="metric-card">
+        <div class="metric-icon aqua">
+          <i data-lucide="calendar-check"></i>
+        </div>
+
+        <div>
+          <span>Vendas de hoje</span>
+          <strong id="vendas-hoje">R$ 0,00</strong>
+          <small id="qtd-vendas-hoje">0 vendas realizadas</small>
+        </div>
       </article>
 
-      <article class="card">
-        <span>Pix</span>
-        <strong id="total-pix">R$ 0,00</strong>
+      <article class="metric-card">
+        <div class="metric-icon purple">
+          <i data-lucide="boxes"></i>
+        </div>
+
+        <div>
+          <span>Itens vendidos</span>
+          <strong id="itens-vendidos">0</strong>
+          <small>Unidades vendidas</small>
+        </div>
       </article>
 
-      <article class="card">
-        <span>Dinheiro</span>
-        <strong id="total-dinheiro">R$ 0,00</strong>
-      </article>
+      <article class="metric-card">
+        <div class="metric-icon orange">
+          <i data-lucide="triangle-alert"></i>
+        </div>
 
-      <article class="card">
-        <span>Cartão</span>
-        <strong id="total-cartao">R$ 0,00</strong>
+        <div>
+          <span>Estoque baixo</span>
+          <strong id="estoque-baixo">0</strong>
+          <small id="estoque-baixo-label">Produtos em atenção</small>
+        </div>
       </article>
     </section>
 
-    <section class="filters">
-  <button class="filter-btn active" data-filter="all" type="button">Tudo</button>
-  <button class="filter-btn" data-filter="today" type="button">Hoje</button>
-  <button class="filter-btn" data-filter="week" type="button">Semana</button>
-  <button class="filter-btn" data-filter="month" type="button">Mês</button>
-  <button class="filter-btn" data-filter="custom" type="button">Personalizado</button>
-</section>
+    <section class="filters dashboard-filters">
+      <button class="filter-btn" data-filter="today" type="button">Hoje</button>
+      <button class="filter-btn" data-filter="week" type="button">Semana</button>
+      <button class="filter-btn active" data-filter="month" type="button">Mês</button>
+      <button class="filter-btn" data-filter="all" type="button">Tudo</button>
+      <button class="filter-btn" data-filter="custom" type="button">
+        <i data-lucide="calendar-days"></i>
+        Personalizado
+      </button>
+    </section>
 
-<section id="custom-filter-box" class="custom-filter-box" style="display: none;">
-  <div>
-    <label for="data-inicial">Data inicial</label>
-    <input id="data-inicial" type="date" />
-  </div>
+    <section id="custom-filter-box" class="custom-filter-box" style="display: none;">
+      <div>
+        <label for="data-inicial">Data inicial</label>
+        <input id="data-inicial" type="date" />
+      </div>
 
-  <div>
-    <label for="data-final">Data final</label>
-    <input id="data-final" type="date" />
-  </div>
+      <div>
+        <label for="data-final">Data final</label>
+        <input id="data-final" type="date" />
+      </div>
 
-  <button id="aplicar-filtro-data" class="btn-primary" type="button">
-  Aplicar
-</button>
-</section>
+      <button id="aplicar-filtro-data" class="btn-primary" type="button">Aplicar filtro</button>
+    </section>
 
-    <section class="charts">
-      <article class="chart-card">
-        <h3>Evolução das vendas</h3>
+    <section class="charts dashboard-charts">
+      <article class="chart-card line-chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Evolução das vendas</h3>
+            <p>Valor vendido por dia</p>
+          </div>
+
+          <span id="chart-total-label">R$ 0,00</span>
+        </div>
+
         <div class="chart-box">
           <canvas id="grafico-linha"></canvas>
         </div>
       </article>
 
-      <article class="chart-card">
-        <h3>Formas de pagamento</h3>
-        <div class="chart-box">
-          <canvas id="grafico-pizza"></canvas>
+      <article class="chart-card payment-chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Formas de pagamento</h3>
+            <p>Distribuição das vendas</p>
+          </div>
+        </div>
+
+        <div class="payment-grid">
+          <div class="chart-box doughnut-box">
+            <canvas id="grafico-pizza"></canvas>
+          </div>
+
+          <div class="payment-summary">
+            <div>
+              <span class="dot pix"></span>
+              <p>Pix</p>
+              <strong id="resumo-pix">R$ 0,00</strong>
+            </div>
+
+            <div>
+              <span class="dot cartao"></span>
+              <p>Cartão</p>
+              <strong id="resumo-cartao">R$ 0,00</strong>
+            </div>
+
+            <div>
+              <span class="dot dinheiro"></span>
+              <p>Dinheiro</p>
+              <strong id="resumo-dinheiro">R$ 0,00</strong>
+            </div>
+          </div>
         </div>
       </article>
     </section>
 
-    <section class="content-grid">
-      <section class="panel">
-        <h2>Nova venda</h2>
+    <section class="dashboard-bottom-grid">
+      <article class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Produtos mais vendidos</h2>
+            <p>Ranking por quantidade vendida</p>
+          </div>
 
-        <form id="form-venda">
-          <label for="produto">Produto ou serviço</label>
-          <input id="produto" type="text" placeholder="Ex: Camiseta" required />
+          <a href="vendas.html">Ver vendas</a>
+        </div>
 
-          <label for="valor">Valor</label>
-          <input id="valor" type="number" step="0.01" placeholder="Ex: 50" required />
+        <div id="produtos-mais-vendidos" class="ranking-list"></div>
+      </article>
 
-          <label for="pagamento">Forma de pagamento</label>
-          <select id="pagamento" required>
-            <option value="pix">Pix</option>
-            <option value="dinheiro">Dinheiro</option>
-            <option value="cartao">Cartão</option>
-          </select>
+      <article class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Produtos com estoque baixo</h2>
+            <p>Itens que precisam de atenção</p>
+          </div>
 
-          <button type="submit">Salvar venda</button>
-        </form>
+          <a href="estoque.html">Ver estoque</a>
+        </div>
 
-        <p id="feedback" class="feedback"></p>
-      </section>
+        <div id="produtos-estoque-baixo" class="low-stock-list"></div>
+      </article>
 
-      <section class="panel">
-        <h2>Últimas vendas</h2>
-        <div id="lista-vendas" class="sales-list"></div>
-      </section>
+      <article class="dashboard-panel recent-sales-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Vendas recentes</h2>
+            <p>Últimas movimentações</p>
+          </div>
+
+          <a href="vendas.html">Ver todas</a>
+        </div>
+
+        <div id="vendas-recentes" class="recent-sales-list"></div>
+      </article>
+    </section>
+
+    <section class="insight-card">
+      <div>
+        <span class="insight-icon">
+          <i data-lucide="sparkles"></i>
+        </span>
+
+        <div>
+          <h2>Insight rápido</h2>
+          <p id="insight-text">Carregando análise rápida do seu negócio...</p>
+        </div>
+      </div>
+
+      <button type="button" class="btn-primary" onclick="window.location.href='#'">
+        Ver relatórios
+        <i data-lucide="arrow-right"></i>
+      </button>
     </section>
   </main>
 
+  <div id="toast-container" class="toast-container"></div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/notifications.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>

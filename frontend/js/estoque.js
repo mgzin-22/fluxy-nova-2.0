@@ -79,6 +79,17 @@ function formatMoney(value) {
   });
 }
 
+function notifyToast(type, icon, title, message) {
+  if (typeof showToast === "function") {
+    showToast({
+      type,
+      icon,
+      title,
+      message
+    });
+  }
+}
+
 function showFeedback(message, type = "success") {
   if (!feedback) return;
 
@@ -295,11 +306,37 @@ async function carregarProdutos() {
       return;
     }
 
-    produtosGlobais = await res.json();
+    const data = await res.json();
+
+    if (!res.ok) {
+      produtosGlobais = [];
+      renderizarProdutos();
+
+      showFeedback(data.error || "Erro ao carregar produtos.", "error");
+      notifyToast(
+        "danger",
+        "circle-alert",
+        "Erro ao carregar estoque",
+        data.error || "Não foi possível buscar os produtos."
+      );
+      return;
+    }
+
+    produtosGlobais = Array.isArray(data) ? data : [];
     renderizarProdutos();
   } catch (error) {
     console.error(error);
+
+    produtosGlobais = [];
+    renderizarProdutos();
+
     showFeedback("Erro ao carregar produtos.", "error");
+    notifyToast(
+      "danger",
+      "wifi-off",
+      "Erro de conexão",
+      "Não foi possível conectar com o servidor."
+    );
   }
 }
 
@@ -316,6 +353,13 @@ imagemProdutoInput.addEventListener("change", async () => {
   imagemBase64 = await fileToBase64(file);
   renderPreview(imagePreview, imagemBase64);
   imageLabel.textContent = "Imagem selecionada";
+
+  notifyToast(
+    "info",
+    "image",
+    "Imagem selecionada",
+    "A imagem será enviada ao salvar o produto."
+  );
 });
 
 editImagemProdutoInput.addEventListener("change", async () => {
@@ -328,6 +372,13 @@ editImagemProdutoInput.addEventListener("change", async () => {
 
   editImagemBase64 = await fileToBase64(file);
   renderPreview(editImagePreview, editImagemBase64);
+
+  notifyToast(
+    "info",
+    "image",
+    "Nova imagem selecionada",
+    "A imagem será atualizada ao salvar as alterações."
+  );
 });
 
 formProduto.addEventListener("submit", async (e) => {
@@ -344,6 +395,12 @@ formProduto.addEventListener("submit", async (e) => {
 
   if (!body.name || !body.category || !body.price || body.stock === "") {
     showFeedback("Preencha nome, categoria, preço e estoque.", "error");
+    notifyToast(
+      "warning",
+      "triangle-alert",
+      "Campos obrigatórios",
+      "Preencha nome, categoria, preço e estoque."
+    );
     return;
   }
 
@@ -361,6 +418,12 @@ formProduto.addEventListener("submit", async (e) => {
 
     if (!response.ok) {
       showFeedback(result.error || "Erro ao salvar produto.", "error");
+      notifyToast(
+        "danger",
+        "circle-alert",
+        "Erro ao salvar produto",
+        result.error || "Não foi possível cadastrar o produto."
+      );
       return;
     }
 
@@ -370,10 +433,24 @@ formProduto.addEventListener("submit", async (e) => {
     imageLabel.textContent = "Selecionar imagem";
 
     showFeedback("Produto salvo com sucesso!");
+    notifyToast(
+      "success",
+      "check",
+      "Produto salvo",
+      "O produto foi cadastrado no estoque."
+    );
+
     await carregarProdutos();
   } catch (error) {
     console.error(error);
+
     showFeedback("Erro ao conectar com servidor.", "error");
+    notifyToast(
+      "danger",
+      "wifi-off",
+      "Erro de conexão",
+      "Não foi possível conectar com o servidor."
+    );
   }
 });
 
@@ -423,6 +500,12 @@ formEditarProduto.addEventListener("submit", async (e) => {
 
   if (!body.name || !body.category || !body.price || body.stock === "") {
     showFeedback("Preencha nome, categoria, preço e estoque.", "error");
+    notifyToast(
+      "warning",
+      "triangle-alert",
+      "Campos obrigatórios",
+      "Preencha nome, categoria, preço e estoque."
+    );
     return;
   }
 
@@ -440,15 +523,36 @@ formEditarProduto.addEventListener("submit", async (e) => {
 
     if (!response.ok) {
       showFeedback(result.error || "Erro ao editar produto.", "error");
+      notifyToast(
+        "danger",
+        "circle-alert",
+        "Erro ao editar produto",
+        result.error || "Não foi possível atualizar o produto."
+      );
       return;
     }
 
     fecharModalEditar();
+
     showFeedback("Produto atualizado com sucesso!");
+    notifyToast(
+      "success",
+      "pencil",
+      "Produto atualizado",
+      "As informações do produto foram alteradas."
+    );
+
     await carregarProdutos();
   } catch (error) {
     console.error(error);
+
     showFeedback("Erro ao conectar com servidor.", "error");
+    notifyToast(
+      "danger",
+      "wifi-off",
+      "Erro de conexão",
+      "Não foi possível conectar com o servidor."
+    );
   }
 });
 
@@ -487,15 +591,36 @@ confirmDeleteBtn.addEventListener("click", async () => {
 
     if (!response.ok) {
       showFeedback(result.error || "Erro ao excluir produto.", "error");
+      notifyToast(
+        "danger",
+        "circle-alert",
+        "Erro ao excluir produto",
+        result.error || "Não foi possível excluir o produto."
+      );
       return;
     }
 
     fecharModalDeletar();
+
     showFeedback("Produto excluído com sucesso!");
+    notifyToast(
+      "danger",
+      "trash-2",
+      "Produto excluído",
+      "O produto foi removido do estoque."
+    );
+
     await carregarProdutos();
   } catch (error) {
     console.error(error);
+
     showFeedback("Erro ao conectar com servidor.", "error");
+    notifyToast(
+      "danger",
+      "wifi-off",
+      "Erro de conexão",
+      "Não foi possível conectar com o servidor."
+    );
   }
 });
 

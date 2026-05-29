@@ -13,6 +13,7 @@
 
   <link rel="stylesheet" href="styles/dashboard.css" />
   <link rel="stylesheet" href="styles/vendas.css" />
+  <link rel="stylesheet" href="styles/notifications.css" />
 </head>
 
 <body>
@@ -36,14 +37,14 @@
           <span class="nav-text">Estoque</span>
         </a>
 
-        <a href="#">
+        <a href="relatorios.html">
           <i data-lucide="bar-chart-3" class="nav-icon"></i>
           <span class="nav-text">Relatórios</span>
         </a>
 
         <a href="perfil.html">
-          <i data-lucide="user-round-cog" class="nav-icon"></i>
-          <span class="nav-text">Perfil</span>
+          <i data-lucide="settings" class="nav-icon"></i>
+          <span class="nav-text">Configurações</span>
         </a>
       </nav>
     </div>
@@ -71,21 +72,21 @@
         </span>
 
         <div>
-          <p>Vendas de hoje</p>
-          <strong id="vendas-hoje">R$ 0,00</strong>
-          <small id="qtd-vendas-hoje">0 vendas</small>
+          <p>Total filtrado</p>
+          <strong id="total-periodo">R$ 0,00</strong>
+          <small id="total-periodo-label">Vendas no filtro atual</small>
         </div>
       </article>
 
       <article class="sales-card">
-        <span class="sales-card-icon blue">
-          <i data-lucide="badge-dollar-sign"></i>
+        <span class="sales-card-icon aqua">
+          <i data-lucide="calendar-check"></i>
         </span>
 
         <div>
-          <p>Total do período</p>
-          <strong id="total-periodo">R$ 0,00</strong>
-          <small>Histórico geral</small>
+          <p>Vendas encontradas</p>
+          <strong id="vendas-hoje">0</strong>
+          <small id="qtd-vendas-hoje">vendas no filtro</small>
         </div>
       </article>
 
@@ -177,18 +178,28 @@
     </section>
 
     <section class="sales-panel history-panel">
-      <div class="history-header">
+      <div class="history-title">
+        <div class="section-title">
+          <span class="section-icon soft">
+            <i data-lucide="receipt-text"></i>
+          </span>
+
+          <div>
+            <h2>Histórico de vendas</h2>
+            <p id="sales-count">Nenhuma venda registrada</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-header advanced-filters">
         <div class="search-box">
           <i data-lucide="search"></i>
           <input id="buscar-venda" type="text" placeholder="Buscar por produto ou categoria..." />
         </div>
 
-        <div class="period-filters">
-          <button class="period-btn active" data-period="all" type="button">Tudo</button>
-          <button class="period-btn" data-period="today" type="button">Hoje</button>
-          <button class="period-btn" data-period="week" type="button">Semana</button>
-          <button class="period-btn" data-period="month" type="button">Mês</button>
-        </div>
+        <select id="filtro-categoria">
+          <option value="todas">Todas as categorias</option>
+        </select>
 
         <select id="filtro-pagamento">
           <option value="todos">Todas as formas</option>
@@ -196,6 +207,41 @@
           <option value="dinheiro">Dinheiro</option>
           <option value="cartao">Cartão</option>
         </select>
+
+        <select id="ordenar-vendas">
+          <option value="recentes">Mais recentes</option>
+          <option value="antigas">Mais antigas</option>
+          <option value="maior-valor">Maior valor</option>
+          <option value="menor-valor">Menor valor</option>
+          <option value="maior-quantidade">Maior quantidade</option>
+        </select>
+      </div>
+
+      <div class="period-filters sales-period-filters">
+        <button class="period-btn active" data-period="all" type="button">Tudo</button>
+        <button class="period-btn" data-period="today" type="button">Hoje</button>
+        <button class="period-btn" data-period="week" type="button">Semana</button>
+        <button class="period-btn" data-period="month" type="button">Mês</button>
+        <button class="period-btn" data-period="custom" type="button">
+          <i data-lucide="calendar-days"></i>
+          Personalizado
+        </button>
+      </div>
+
+      <div id="custom-date-box" class="custom-date-box" hidden>
+        <div class="form-group">
+          <label for="data-inicial">Data inicial</label>
+          <input id="data-inicial" type="date" />
+        </div>
+
+        <div class="form-group">
+          <label for="data-final">Data final</label>
+          <input id="data-final" type="date" />
+        </div>
+
+        <button id="aplicar-data" class="apply-date-btn" type="button">
+          Aplicar período
+        </button>
       </div>
 
       <div class="table-wrapper">
@@ -215,9 +261,26 @@
           <tbody id="lista-vendas"></tbody>
         </table>
       </div>
+
+      <div class="pagination">
+        <button id="prev-page" type="button">
+          <i data-lucide="chevron-left"></i>
+          Anterior
+        </button>
+
+        <span id="page-info">Página 1 de 1</span>
+
+        <button id="next-page" type="button">
+          Próxima
+          <i data-lucide="chevron-right"></i>
+        </button>
+      </div>
     </section>
   </main>
 
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="js/notifications.js"></script>
   <script src="js/vendas.js"></script>
 </body>
 </html>
