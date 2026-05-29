@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxy - Vendas</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="stylesheet" href="styles/dashboard.css" />
+  <link rel="stylesheet" href="styles/vendas.css" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <div>
+      <img src="assets/icone.png" alt="Fluxy" class="logo" />
+
+      <nav>
+        <a href="dashboard.html">
+          <i data-lucide="layout-dashboard" class="nav-icon"></i>
+          <span class="nav-text">Dashboard</span>
+        </a>
+
+        <a class="active" href="vendas.html">
+          <i data-lucide="shopping-cart" class="nav-icon"></i>
+          <span class="nav-text">Vendas</span>
+        </a>
+
+        <a href="estoque.html">
+          <i data-lucide="package" class="nav-icon"></i>
+          <span class="nav-text">Estoque</span>
+        </a>
+
+        <a href="#">
+          <i data-lucide="bar-chart-3" class="nav-icon"></i>
+          <span class="nav-text">Relatórios</span>
+        </a>
+
+        <a href="perfil.html">
+          <i data-lucide="user-round-cog" class="nav-icon"></i>
+          <span class="nav-text">Perfil</span>
+        </a>
+      </nav>
+    </div>
+
+    <button class="logout-btn" onclick="sair()">
+      <i data-lucide="log-out" class="logout-icon"></i>
+      <span class="logout-text">Sair</span>
+    </button>
+  </aside>
+
+  <main class="dashboard vendas-page">
+    <header class="topbar vendas-topbar">
+      <div>
+        <h1>Vendas</h1>
+        <p>Registre vendas e acompanhe o histórico do seu negócio.</p>
+      </div>
+
+      <button id="toggle-theme" class="theme-btn" type="button">🌙</button>
+    </header>
+
+    <section class="sales-cards">
+      <article class="sales-card">
+        <span class="sales-card-icon blue">
+          <i data-lucide="trending-up"></i>
+        </span>
+
+        <div>
+          <p>Vendas de hoje</p>
+          <strong id="vendas-hoje">R$ 0,00</strong>
+          <small id="qtd-vendas-hoje">0 vendas</small>
+        </div>
+      </article>
+
+      <article class="sales-card">
+        <span class="sales-card-icon blue">
+          <i data-lucide="badge-dollar-sign"></i>
+        </span>
+
+        <div>
+          <p>Total do período</p>
+          <strong id="total-periodo">R$ 0,00</strong>
+          <small>Histórico geral</small>
+        </div>
+      </article>
+
+      <article class="sales-card">
+        <span class="sales-card-icon aqua">
+          <i data-lucide="package-check"></i>
+        </span>
+
+        <div>
+          <p>Itens vendidos</p>
+          <strong id="itens-vendidos">0</strong>
+          <small>Total de unidades</small>
+        </div>
+      </article>
+
+      <article class="sales-card">
+        <span class="sales-card-icon green">
+          <i data-lucide="zap"></i>
+        </span>
+
+        <div>
+          <p>Pagamento destaque</p>
+          <strong id="pagamento-destaque">-</strong>
+          <small id="pagamento-destaque-valor">R$ 0,00</small>
+        </div>
+      </article>
+    </section>
+
+    <section class="stock-alert">
+      <i data-lucide="info"></i>
+      <p>
+        <strong>Integração com o estoque:</strong>
+        ao registrar uma venda, os itens serão baixados automaticamente do estoque.
+      </p>
+    </section>
+
+    <section class="sales-panel new-sale-panel">
+      <div class="section-title">
+        <span class="section-icon">
+          <i data-lucide="shopping-cart"></i>
+        </span>
+
+        <div>
+          <h2>Nova venda</h2>
+          <p>Selecione um produto cadastrado no estoque.</p>
+        </div>
+      </div>
+
+      <form id="form-venda" class="sale-form">
+        <div class="form-group product-select-group">
+          <label for="produto-venda">Produto</label>
+          <select id="produto-venda" required>
+            <option value="">Selecione um produto</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="categoria-venda">Categoria</label>
+          <input id="categoria-venda" type="text" placeholder="Categoria" disabled />
+        </div>
+
+        <div class="form-group">
+          <label for="quantidade-venda">Quantidade</label>
+          <input id="quantidade-venda" type="number" min="1" value="1" required />
+        </div>
+
+        <div class="form-group">
+          <label for="preco-unitario">Preço unitário</label>
+          <input id="preco-unitario" type="text" placeholder="R$ 0,00" disabled />
+        </div>
+
+        <div class="form-group">
+          <label for="pagamento-venda">Forma de pagamento</label>
+          <select id="pagamento-venda" required>
+            <option value="">Selecione</option>
+            <option value="pix">Pix</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao">Cartão</option>
+          </select>
+        </div>
+
+        <button type="submit" class="register-sale-btn">
+          <i data-lucide="shopping-cart"></i>
+          Registrar venda
+        </button>
+      </form>
+
+      <p id="vendas-feedback" class="feedback"></p>
+    </section>
+
+    <section class="sales-panel history-panel">
+      <div class="history-header">
+        <div class="search-box">
+          <i data-lucide="search"></i>
+          <input id="buscar-venda" type="text" placeholder="Buscar por produto ou categoria..." />
+        </div>
+
+        <div class="period-filters">
+          <button class="period-btn active" data-period="all" type="button">Tudo</button>
+          <button class="period-btn" data-period="today" type="button">Hoje</button>
+          <button class="period-btn" data-period="week" type="button">Semana</button>
+          <button class="period-btn" data-period="month" type="button">Mês</button>
+        </div>
+
+        <select id="filtro-pagamento">
+          <option value="todos">Todas as formas</option>
+          <option value="pix">Pix</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="cartao">Cartão</option>
+        </select>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="sales-table">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Categoria</th>
+              <th>Quantidade</th>
+              <th>Pagamento</th>
+              <th>Valor total</th>
+              <th>Data</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody id="lista-vendas"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/vendas.js"></script>
+</body>
+</html>
