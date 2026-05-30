@@ -3,20 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fluxy - Perfil</title>
+  <title>Fluxy - Configurações</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <script src="https://unpkg.com/lucide@latest"></script>
+
   <link rel="stylesheet" href="styles/dashboard.css" />
   <link rel="stylesheet" href="styles/perfil.css" />
+  <link rel="stylesheet" href="styles/notifications.css" />
 </head>
+
 <body>
   <aside class="sidebar">
     <div>
-      <img src="assets/logo.png" alt="Fluxy" class="logo" />
+      <img src="assets/icone.png" alt="Fluxy" class="logo" />
 
       <nav>
         <a href="dashboard.html">
@@ -24,95 +27,409 @@
           <span class="nav-text">Dashboard</span>
         </a>
 
-        <a href="#">
+        <a href="vendas.html">
           <i data-lucide="shopping-cart" class="nav-icon"></i>
           <span class="nav-text">Vendas</span>
         </a>
 
-        <a href="#">
+        <a href="estoque.html">
           <i data-lucide="package" class="nav-icon"></i>
           <span class="nav-text">Estoque</span>
         </a>
 
-        <a href="#">
+        <a href="relatorios.html">
           <i data-lucide="bar-chart-3" class="nav-icon"></i>
           <span class="nav-text">Relatórios</span>
         </a>
 
         <a class="active" href="perfil.html">
-          <i data-lucide="user-round-cog" class="nav-icon"></i>
-          <span class="nav-text">Perfil</span>
+          <i data-lucide="settings" class="nav-icon"></i>
+          <span class="nav-text">Configurações</span>
         </a>
       </nav>
     </div>
-
-    <button class="logout-btn" onclick="sair()">
-      <i data-lucide="log-out" class="logout-icon"></i>
-      <span class="logout-text">Sair</span>
-    </button>
   </aside>
 
-  <main class="profile-page">
-    <header class="topbar">
+  <main class="dashboard settings-page">
+    <header class="topbar settings-topbar">
       <div>
-        <h1>Perfil</h1>
-        <p>Configure sua conta e os dados do seu negócio.</p>
+        <h1>Configurações</h1>
+        <p>Gerencie perfil, preferências, termos, permissões e segurança.</p>
       </div>
-
-      <button id="toggle-theme" class="theme-btn" type="button">🌙</button>
     </header>
 
-    <section class="profile-grid">
-      <section class="profile-card">
-        <h2>Dados do usuário</h2>
+    <section class="settings-layout">
+      <aside class="settings-tabs">
+        <button class="settings-tab active" data-tab="perfil" type="button">
+          <i data-lucide="store"></i>
+          <span>Perfil do negócio</span>
+        </button>
 
-        <form id="form-profile">
-          <label>Nome</label>
-          <input id="name" type="text" required />
+        <button class="settings-tab" data-tab="preferencias" type="button">
+          <i data-lucide="sliders-horizontal"></i>
+          <span>Preferências</span>
+        </button>
 
-          <label>E-mail</label>
-          <input id="email" type="email" disabled />
+        <button class="settings-tab" data-tab="termos" type="button">
+          <i data-lucide="file-text"></i>
+          <span>Termos e missão</span>
+        </button>
 
-          <label>Nome do negócio</label>
-          <input id="businessName" type="text" placeholder="Ex: Loja do Miguel" />
+        <button class="settings-tab" data-tab="permissoes" type="button">
+          <i data-lucide="shield-check"></i>
+          <span>Permissões</span>
+        </button>
 
-          <label>Tipo de negócio</label>
-          <select id="businessType">
-            <option value="">Selecione</option>
-            <option value="loja">Loja</option>
-            <option value="servicos">Serviços</option>
-            <option value="alimentacao">Alimentação</option>
-            <option value="moda">Moda</option>
-            <option value="outro">Outro</option>
-          </select>
+        <button class="settings-tab" data-tab="seguranca" type="button">
+          <i data-lucide="lock-keyhole"></i>
+          <span>Segurança</span>
+        </button>
+      </aside>
 
-          <label>Meta mensal de vendas</label>
-          <input id="monthlyGoal" type="number" step="0.01" placeholder="Ex: 5000" />
+      <section class="settings-content">
+        <!-- PERFIL -->
+        <article id="tab-perfil" class="settings-panel active">
+          <div class="panel-heading">
+            <span class="panel-icon">
+              <i data-lucide="store"></i>
+            </span>
 
-          <button type="submit">Salvar alterações</button>
-        </form>
+            <div>
+              <h2>Perfil do negócio</h2>
+              <p>Essas informações personalizam o sistema, o dashboard e os relatórios da Fluxy.</p>
+            </div>
+          </div>
 
-        <p id="profile-feedback" class="feedback"></p>
-      </section>
+          <form id="form-perfil" class="settings-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="nome-usuario">Nome do usuário</label>
+                <input id="nome-usuario" type="text" placeholder="Ex: Miguel Feitosa" />
+              </div>
 
-      <section class="profile-card">
-        <h2>Segurança</h2>
+              <div class="form-group">
+                <label for="email-usuario">Email da conta</label>
+                <input id="email-usuario" type="email" disabled />
+              </div>
 
-        <form id="form-password">
-          <label>Senha atual</label>
-          <input id="currentPassword" type="password" required />
+              <div class="form-group">
+                <label for="nome-negocio">Nome do negócio</label>
+                <input id="nome-negocio" type="text" placeholder="Ex: Fluxy Store" />
+              </div>
 
-          <label>Nova senha</label>
-          <input id="newPassword" type="password" required />
+              <div class="form-group">
+                <label for="tipo-negocio">Tipo do negócio</label>
+                <input id="tipo-negocio" type="text" placeholder="Ex: Loja, padaria, eletrônicos..." />
+              </div>
 
-          <button type="submit">Alterar senha</button>
-        </form>
+              <div class="form-group">
+                <label for="meta-mensal">Meta mensal</label>
+                <input id="meta-mensal" type="number" min="0" step="0.01" placeholder="Ex: 5000" />
+              </div>
 
-        <p id="password-feedback" class="feedback"></p>
+              <div class="form-group">
+                <label for="telefone-negocio">Telefone/WhatsApp</label>
+                <input id="telefone-negocio" type="text" placeholder="Ex: (11) 99999-9999" />
+              </div>
+            </div>
+
+            <button class="settings-save-btn" type="submit">
+              <i data-lucide="save"></i>
+              Salvar perfil
+            </button>
+          </form>
+        </article>
+
+        <!-- PREFERÊNCIAS -->
+        <article id="tab-preferencias" class="settings-panel">
+          <div class="panel-heading">
+            <span class="panel-icon">
+              <i data-lucide="sliders-horizontal"></i>
+            </span>
+
+            <div>
+              <h2>Preferências</h2>
+              <p>Controle aparência e alertas visuais do sistema.</p>
+            </div>
+          </div>
+
+          <div class="preferences-list">
+            <div class="preference-card">
+              <div>
+                <h3>Tema do sistema</h3>
+                <p>Escolha entre modo escuro e modo claro.</p>
+              </div>
+
+              <div class="theme-choice">
+                <button id="theme-dark" class="theme-option" type="button">
+                  <i data-lucide="moon"></i>
+                  Escuro
+                </button>
+
+                <button id="theme-light" class="theme-option" type="button">
+                  <i data-lucide="sun"></i>
+                  Claro
+                </button>
+              </div>
+            </div>
+
+            <div class="preference-card">
+              <div>
+                <h3>Notificações visuais</h3>
+                <p>Exibir popups animados de sucesso, erro e alertas.</p>
+              </div>
+
+              <label class="switch">
+                <input id="notificacoes-visuais" type="checkbox" />
+                <span></span>
+              </label>
+            </div>
+
+            <div class="preference-card">
+              <div>
+                <h3>Alertas de estoque</h3>
+                <p>Avisar quando produtos chegarem ao estoque mínimo.</p>
+              </div>
+
+              <label class="switch">
+                <input id="alertas-estoque" type="checkbox" />
+                <span></span>
+              </label>
+            </div>
+          </div>
+
+          <button id="salvar-preferencias" class="settings-save-btn" type="button">
+            <i data-lucide="save"></i>
+            Salvar preferências
+          </button>
+        </article>
+
+        <!-- TERMOS -->
+        <article id="tab-termos" class="settings-panel">
+          <div class="panel-heading">
+            <span class="panel-icon">
+              <i data-lucide="file-text"></i>
+            </span>
+
+            <div>
+              <h2>Termos e missão</h2>
+              <p>Entenda a proposta da Fluxy, o uso dos dados e as condições básicas do sistema.</p>
+            </div>
+          </div>
+
+          <div class="terms-box">
+            <h3>1. Missão da Fluxy</h3>
+            <p>
+              A Fluxy tem como missão ajudar pequenos negócios a organizarem suas vendas,
+              produtos, estoque e informações financeiras de forma simples, visual e acessível.
+              O sistema foi pensado para facilitar a rotina de empreendedores que precisam
+              registrar movimentações, acompanhar resultados e tomar decisões com mais segurança.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>2. Objetivo do sistema</h3>
+            <p>
+              A Fluxy funciona como uma plataforma de apoio à gestão comercial, permitindo o
+              cadastro de produtos, controle de estoque, registro de vendas, visualização de
+              indicadores e geração de relatórios. O sistema busca centralizar informações
+              importantes do negócio em um ambiente organizado e fácil de usar.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>3. Responsabilidade do usuário</h3>
+            <p>
+              O usuário é responsável por cadastrar informações corretas no sistema, incluindo
+              produtos, categorias, preços, quantidades em estoque, vendas realizadas, formas de
+              pagamento e dados do negócio. A qualidade dos relatórios e indicadores depende
+              diretamente da precisão dos dados informados pelo usuário.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>4. Uso dos dados cadastrados</h3>
+            <p>
+              Os dados inseridos na Fluxy poderão ser utilizados dentro do próprio sistema para
+              exibir dashboards, gráficos, históricos, alertas de estoque, indicadores de vendas
+              e relatórios gerenciais. Essas informações têm como finalidade auxiliar o usuário
+              no acompanhamento e organização do seu negócio.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>5. Relatórios e indicadores</h3>
+            <p>
+              A Fluxy poderá utilizar os registros de vendas, produtos, categorias, estoque e
+              formas de pagamento para gerar consultas, gráficos e relatórios. Esses relatórios
+              servem como apoio visual e analítico, permitindo observar desempenho, produtos
+              mais vendidos, formas de pagamento em destaque e itens que precisam de reposição.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>6. Agente de IA Fluxter</h3>
+            <p>
+              Quando autorizado pelo usuário, o agente de IA Fluxter poderá analisar dados do
+              sistema para gerar insights, explicar informações dos relatórios, identificar
+              oportunidades, apontar possíveis problemas no estoque e sugerir melhorias na
+              organização do negócio. O Fluxter atua como apoio inteligente, mas não substitui
+              análise profissional contábil, financeira ou jurídica.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>7. Notificações e alertas</h3>
+            <p>
+              A Fluxy poderá exibir notificações visuais sobre ações realizadas no sistema,
+              como vendas registradas, produtos cadastrados, alterações salvas, erros de operação
+              e alertas de estoque baixo. Caso o usuário permita notificações inteligentes,
+              o sistema também poderá destacar movimentações importantes e oportunidades detectadas.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>8. Permissões do usuário</h3>
+            <p>
+              Algumas funcionalidades dependem de autorização do usuário, como o uso dos dados
+              para relatórios, análise por IA e notificações inteligentes. Essas permissões podem
+              ser ativadas ou desativadas na área de configurações, respeitando a preferência do
+              usuário sobre como seus dados serão usados dentro da plataforma.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>9. Segurança e acesso</h3>
+            <p>
+              O acesso ao sistema é feito por meio de autenticação. O usuário deve manter suas
+              credenciais em segurança e evitar compartilhar sua conta com terceiros. Ao sair da
+              conta, o token de acesso salvo no navegador é removido, encerrando a sessão local.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>10. Limitações da Fluxy</h3>
+            <p>
+              A Fluxy é uma ferramenta de apoio à gestão e organização de dados. Os resultados,
+              relatórios e sugestões apresentados devem ser interpretados como auxílio à tomada
+              de decisão. O sistema não substitui serviços profissionais de contabilidade,
+              consultoria financeira, assessoria jurídica ou auditoria.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>11. Atualizações do sistema</h3>
+            <p>
+              A Fluxy poderá receber melhorias, novas funcionalidades, ajustes visuais e correções
+              ao longo do tempo. Funcionalidades como relatórios avançados, exportação de dados e
+              IA Fluxter poderão ser expandidas conforme a evolução do sistema.
+            </p>
+          </div>
+
+          <div class="terms-box">
+            <h3>12. Aceite dos termos</h3>
+            <p>
+              Ao utilizar a Fluxy e marcar o aceite dos termos, o usuário declara estar ciente da
+              finalidade do sistema, das permissões disponíveis e das responsabilidades relacionadas
+              ao uso das informações cadastradas. O aceite pode ser registrado na aba Permissões.
+            </p>
+          </div>
+        </article>
+
+        <!-- PERMISSÕES -->
+        <article id="tab-permissoes" class="settings-panel">
+          <div class="panel-heading">
+            <span class="panel-icon">
+              <i data-lucide="shield-check"></i>
+            </span>
+
+            <div>
+              <h2>Permissões</h2>
+              <p>Defina quais recursos podem usar os dados cadastrados.</p>
+            </div>
+          </div>
+
+          <div class="permissions-list">
+            <label class="permission-card">
+              <input id="aceite-termos" type="checkbox" />
+              <span class="permission-box">
+                <strong>Aceito os termos de uso</strong>
+                <small>Confirmo que li e aceito os termos, missão e condições básicas da Fluxy.</small>
+              </span>
+            </label>
+
+            <label class="permission-card">
+              <input id="permissao-relatorios" type="checkbox" />
+              <span class="permission-box">
+                <strong>Permitir relatórios com meus dados</strong>
+                <small>Autoriza vendas e estoque a serem usados para gráficos, indicadores e análises.</small>
+              </span>
+            </label>
+
+            <label class="permission-card">
+              <input id="permissao-ia" type="checkbox" />
+              <span class="permission-box">
+                <strong>Permitir análise da IA Fluxter</strong>
+                <small>Autoriza o Fluxter a analisar vendas, produtos e estoque para gerar insights.</small>
+              </span>
+            </label>
+
+            <label class="permission-card">
+              <input id="permissao-notificacoes" type="checkbox" />
+              <span class="permission-box">
+                <strong>Permitir notificações inteligentes</strong>
+                <small>Permite alertas sobre estoque baixo, oportunidades, movimentações e recomendações.</small>
+              </span>
+            </label>
+          </div>
+
+          <button id="salvar-permissoes" class="settings-save-btn" type="button">
+            <i data-lucide="shield-check"></i>
+            Salvar permissões
+          </button>
+        </article>
+
+        <!-- SEGURANÇA -->
+        <article id="tab-seguranca" class="settings-panel">
+          <div class="panel-heading">
+            <span class="panel-icon danger">
+              <i data-lucide="lock-keyhole"></i>
+            </span>
+
+            <div>
+              <h2>Segurança</h2>
+              <p>Gerencie ações de acesso da conta.</p>
+            </div>
+          </div>
+
+          <div class="security-card">
+            <div>
+              <h3>Conta conectada</h3>
+              <p id="security-email">Email não identificado</p>
+            </div>
+
+            <span class="security-badge">Ativa</span>
+          </div>
+
+          <div class="security-card danger-zone">
+            <div>
+              <h3>Sair da conta</h3>
+              <p>Encerra a sessão neste navegador e retorna para a tela de login.</p>
+            </div>
+
+            <button id="logout-settings-btn" class="danger-btn" type="button">
+              <i data-lucide="log-out"></i>
+              Sair da conta
+            </button>
+          </div>
+        </article>
       </section>
     </section>
   </main>
 
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="js/notifications.js"></script>
   <script src="js/perfil.js"></script>
 </body>
 </html>
