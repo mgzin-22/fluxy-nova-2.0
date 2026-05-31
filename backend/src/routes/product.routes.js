@@ -8,6 +8,19 @@ const prisma = new PrismaClient();
 
 router.use(authMiddleware);
 
+function normalizeText(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function toNumber(value) {
+  if (value === "" || value === null || value === undefined) return null;
+  return Number(value);
+}
+
+function isInvalidNumber(value) {
+  return Number.isNaN(value) || value === null;
+}
+
 async function uploadProductImage(imageBase64) {
   if (!imageBase64) return null;
 
@@ -23,13 +36,20 @@ async function uploadProductImage(imageBase64) {
 router.get("/", async (req, res) => {
   try {
     const products = await prisma.product.findMany({
-      where: { userId: req.userId },
-      orderBy: { createdAt: "desc" }
+      where: {
+        userId: req.userId
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
     });
 
     res.json(products);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: "Erro ao listar produtos.",
+      details: error.message
+    });
   }
 });
 
@@ -38,9 +58,35 @@ router.post("/", async (req, res) => {
   try {
     const { name, category, price, stock, minStock, imageBase64 } = req.body;
 
-    if (!name || !category || price === undefined || stock === undefined) {
+    const productName = normalizeText(name);
+    const productCategory = normalizeText(category);
+    const productPrice = toNumber(price);
+    const productStock = toNumber(stock);
+    const productMinStock = minStock === "" || minStock === null || minStock === undefined
+      ? null
+      : toNumber(minStock);
+
+    if (!productName || !productCategory || price === undefined || stock === undefined) {
       return res.status(400).json({
         error: "Preencha nome, categoria, preço e estoque."
+      });
+    }
+
+    if (isInvalidNumber(productPrice) || productPrice < 0) {
+      return res.status(400).json({
+        error: "Informe um preço válido."
+      });
+    }
+
+    if (isInvalidNumber(productStock) || productStock < 0 || !Number.isInteger(productStock)) {
+      return res.status(400).json({
+        error: "Informe uma quantidade de estoque válida."
+      });
+    }
+
+    if (productMinStock !== null && (isInvalidNumber(productMinStock) || productMinStock < 0 || !Number.isInteger(productMinStock))) {
+      return res.status(400).json({
+        error: "Informe um estoque mínimo válido."
       });
     }
 
@@ -48,11 +94,11 @@ router.post("/", async (req, res) => {
 
     const product = await prisma.product.create({
       data: {
-        name,
-        category,
-        price: Number(price),
-        stock: Number(stock),
-        minStock: minStock ? Number(minStock) : null,
+        name: productName,
+        category: productCategory,
+        price: productPrice,
+        stock: productStock,
+        minStock: productMinStock,
         imageUrl,
         userId: req.userId
       }
@@ -60,7 +106,10 @@ router.post("/", async (req, res) => {
 
     res.status(201).json(product);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: "Erro ao criar produto.",
+      details: error.message
+    });
   }
 });
 
@@ -77,7 +126,41 @@ router.put("/:id", async (req, res) => {
     });
 
     if (!productExists) {
-      return res.status(404).json({ error: "Produto não encontrado." });
+      return res.status(404).json({
+        error: "Produto não encontrado."
+      });
+    }
+
+    const productName = normalizeText(name);
+    const productCategory = normalizeText(category);
+    const productPrice = toNumber(price);
+    const productStock = toNumber(stock);
+    const productMinStock = minStock === "" || minStock === null || minStock === undefined
+      ? null
+      : toNumber(minStock);
+
+    if (!productName || !productCategory || price === undefined || stock === undefined) {
+      return res.status(400).json({
+        error: "Preencha nome, categoria, preço e estoque."
+      });
+    }
+
+    if (isInvalidNumber(productPrice) || productPrice < 0) {
+      return res.status(400).json({
+        error: "Informe um preço válido."
+      });
+    }
+
+    if (isInvalidNumber(productStock) || productStock < 0 || !Number.isInteger(productStock)) {
+      return res.status(400).json({
+        error: "Informe uma quantidade de estoque válida."
+      });
+    }
+
+    if (productMinStock !== null && (isInvalidNumber(productMinStock) || productMinStock < 0 || !Number.isInteger(productMinStock))) {
+      return res.status(400).json({
+        error: "Informe um estoque mínimo válido."
+      });
     }
 
     let imageUrl = productExists.imageUrl;
@@ -91,22 +174,25 @@ router.put("/:id", async (req, res) => {
         id: req.params.id
       },
       data: {
-        name,
-        category,
-        price: Number(price),
-        stock: Number(stock),
-        minStock: minStock ? Number(minStock) : null,
+        name: productName,
+        category: productCategory,
+        price: productPrice,
+        stock: productStock,
+        minStock: productMinStock,
         imageUrl
       }
     });
 
     res.json(product);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: "Erro ao editar produto.",
+      details: error.message
+    });
   }
 });
 
-// DELETAR PRODUTO
+// DELETAR PRODUTO COM REGRA DE INTEGRIDADE
 router.delete("/:id", async (req, res) => {
   try {
     const productExists = await prisma.product.findFirst({
@@ -117,7 +203,24 @@ router.delete("/:id", async (req, res) => {
     });
 
     if (!productExists) {
-      return res.status(404).json({ error: "Produto não encontrado." });
+      return res.status(404).json({
+        error: "Produto não encontrado."
+      });
+    }
+
+    const vendasVinculadas = await prisma.venda.count({
+      where: {
+        productId: req.params.id,
+        userId: req.userId
+      }
+    });
+
+    if (vendasVinculadas > 0) {
+      return res.status(409).json({
+        error: "Este produto não pode ser excluído porque já possui vendas vinculadas.",
+        message: "Para manter o histórico e a integridade dos relatórios, produtos vendidos devem permanecer cadastrados.",
+        vendasVinculadas
+      });
     }
 
     await prisma.product.delete({
@@ -126,9 +229,14 @@ router.delete("/:id", async (req, res) => {
       }
     });
 
-    res.json({ message: "Produto removido com sucesso." });
+    res.json({
+      message: "Produto removido com sucesso."
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: "Erro ao deletar produto.",
+      details: error.message
+    });
   }
 });
 

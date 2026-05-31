@@ -7,47 +7,88 @@ const prisma = new PrismaClient();
 
 router.use(authMiddleware);
 
+function normalizeText(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizePayment(value) {
+  const payment = normalizeText(value).toLowerCase();
+
+  const allowedPayments = ["pix", "dinheiro", "cartao"];
+
+  if (!allowedPayments.includes(payment)) {
+    return null;
+  }
+
+  return payment;
+}
+
 // CRIAR VENDA INTEGRADA AO ESTOQUE
 router.post("/", async (req, res) => {
   try {
     const { productId, quantidade, pagamento } = req.body;
 
-    if (!productId || !quantidade || !pagamento) {
+    const saleProductId = normalizeText(productId);
+    const qtd = Number(quantidade);
+    const payment = normalizePayment(pagamento);
+
+    if (!saleProductId || quantidade === undefined || !pagamento) {
       return res.status(400).json({
         error: "Informe o produto, a quantidade e a forma de pagamento."
       });
     }
 
-    const qtd = Number(quantidade);
-
-    if (qtd <= 0) {
+    if (!Number.isInteger(qtd) || qtd <= 0) {
       return res.status(400).json({
-        error: "A quantidade precisa ser maior que zero."
+        error: "A quantidade precisa ser um número inteiro maior que zero."
       });
     }
 
-    const product = await prisma.product.findFirst({
-      where: {
-        id: productId,
-        userId: req.userId
-      }
-    });
-
-    if (!product) {
-      return res.status(404).json({
-        error: "Produto não encontrado."
-      });
-    }
-
-    if (product.stock < qtd) {
+    if (!payment) {
       return res.status(400).json({
-        error: `Estoque insuficiente. Disponível: ${product.stock}.`
+        error: "Forma de pagamento inválida. Use pix, dinheiro ou cartao."
       });
     }
-
-    const valorTotal = product.price * qtd;
 
     const venda = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.findFirst({
+        where: {
+          id: saleProductId,
+          userId: req.userId
+        }
+      });
+
+      if (!product) {
+        const error = new Error("Produto não encontrado.");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      if (product.stock < qtd) {
+        const error = new Error(`Estoque insuficiente. Disponível: ${product.stock}.`);
+        error.statusCode = 400;
+        throw error;
+      }
+
+      const updatedProduct = await tx.product.update({
+        where: {
+          id: product.id
+        },
+        data: {
+          stock: {
+            decrement: qtd
+          }
+        }
+      });
+
+      if (updatedProduct.stock < 0) {
+        const error = new Error("Estoque insuficiente para concluir a venda.");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      const valorTotal = Number(product.price) * qtd;
+
       const novaVenda = await tx.venda.create({
         data: {
           produto: product.name,
@@ -55,19 +96,13 @@ router.post("/", async (req, res) => {
           quantidade: qtd,
           precoUnitario: product.price,
           valor: valorTotal,
-          pagamento,
+          pagamento: payment,
           status: "Concluída",
           userId: req.userId,
           productId: product.id
-        }
-      });
-
-      await tx.product.update({
-        where: {
-          id: product.id
         },
-        data: {
-          stock: product.stock - qtd
+        include: {
+          product: true
         }
       });
 
@@ -76,7 +111,11 @@ router.post("/", async (req, res) => {
 
     res.status(201).json(venda);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const statusCode = error.statusCode || 500;
+
+    res.status(statusCode).json({
+      error: error.message || "Erro ao registrar venda."
+    });
   }
 });
 
@@ -97,7 +136,10 @@ router.get("/", async (req, res) => {
 
     res.json(vendas);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: "Erro ao listar vendas.",
+      details: error.message
+    });
   }
 });
 
@@ -121,12 +163,20 @@ router.get("/summary", async (req, res) => {
       return dataVenda >= hoje;
     });
 
-    const totalHoje = vendasHoje.reduce((total, venda) => total + venda.valor, 0);
-    const totalPeriodo = vendas.reduce((total, venda) => total + venda.valor, 0);
-    const itensVendidos = vendas.reduce((total, venda) => total + venda.quantidade, 0);
+    const totalHoje = vendasHoje.reduce((total, venda) => {
+      return total + Number(venda.valor || 0);
+    }, 0);
+
+    const totalPeriodo = vendas.reduce((total, venda) => {
+      return total + Number(venda.valor || 0);
+    }, 0);
+
+    const itensVendidos = vendas.reduce((total, venda) => {
+      return total + Number(venda.quantidade || 1);
+    }, 0);
 
     const pagamentos = vendas.reduce((acc, venda) => {
-      acc[venda.pagamento] = (acc[venda.pagamento] || 0) + venda.valor;
+      acc[venda.pagamento] = (acc[venda.pagamento] || 0) + Number(venda.valor || 0);
       return acc;
     }, {});
 
@@ -145,7 +195,10 @@ router.get("/summary", async (req, res) => {
         : null
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: "Erro ao gerar resumo das vendas.",
+      details: error.message
+    });
   }
 });
 

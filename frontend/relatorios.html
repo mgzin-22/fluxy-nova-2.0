@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxy - Relatórios</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="stylesheet" href="styles/dashboard.css" />
+  <link rel="stylesheet" href="styles/relatorios.css" />
+  <link rel="stylesheet" href="styles/notifications.css" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <div>
+      <img src="assets/icone.png" alt="Fluxy" class="logo" />
+
+      <nav>
+        <a href="dashboard.html">
+          <i data-lucide="layout-dashboard" class="nav-icon"></i>
+          <span class="nav-text">Dashboard</span>
+        </a>
+
+        <a href="vendas.html">
+          <i data-lucide="shopping-cart" class="nav-icon"></i>
+          <span class="nav-text">Vendas</span>
+        </a>
+
+        <a href="estoque.html">
+          <i data-lucide="package" class="nav-icon"></i>
+          <span class="nav-text">Estoque</span>
+        </a>
+
+        <a class="active" href="relatorios.html">
+          <i data-lucide="bar-chart-3" class="nav-icon"></i>
+          <span class="nav-text">Relatórios</span>
+        </a>
+
+        <a href="perfil.html">
+          <i data-lucide="settings" class="nav-icon"></i>
+          <span class="nav-text">Configurações</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="ai-menu-card">
+      <span>
+        <i data-lucide="sparkles"></i>
+      </span>
+
+      <div>
+        <strong>Fluxter IA</strong>
+        <small>Relatórios inteligentes</small>
+      </div>
+    </div>
+  </aside>
+
+  <main class="dashboard reports-page">
+    <header class="reports-header">
+      <div>
+        <h1>Relatórios</h1>
+        <p>Acompanhe o desempenho do seu negócio com análises detalhadas.</p>
+      </div>
+
+      <div class="reports-header-actions">
+        <div class="date-display">
+          <i data-lucide="calendar-days"></i>
+          <span id="period-display">Todo o histórico</span>
+        </div>
+
+        <button id="open-filters" class="filter-toggle-btn" type="button">
+          <i data-lucide="sliders-horizontal"></i>
+          Filtros
+        </button>
+
+        <button id="export-pdf" class="export-action pdf" type="button">
+          <i data-lucide="file-text"></i>
+          PDF
+        </button>
+
+        <button id="export-xlsx" class="export-action xlsx" type="button">
+          <i data-lucide="file-spreadsheet"></i>
+          Excel
+        </button>
+      </div>
+    </header>
+
+    <section id="filters-panel" class="reports-filters-panel" hidden>
+      <div class="filters-header">
+        <div>
+          <h2>Filtros do relatório</h2>
+          <p>Refine os dados por período, categoria, pagamento e busca.</p>
+        </div>
+
+        <button id="clear-filters" class="clear-filter-btn" type="button">
+          <i data-lucide="rotate-ccw"></i>
+          Limpar
+        </button>
+      </div>
+
+      <div class="period-filters report-periods">
+        <button class="period-btn active" data-period="all" type="button">Tudo</button>
+        <button class="period-btn" data-period="today" type="button">Hoje</button>
+        <button class="period-btn" data-period="week" type="button">Semana</button>
+        <button class="period-btn" data-period="month" type="button">Mês</button>
+        <button class="period-btn" data-period="custom" type="button">
+          <i data-lucide="calendar-days"></i>
+          Personalizado
+        </button>
+      </div>
+
+      <div id="custom-date-box" class="custom-date-box" hidden>
+        <div class="form-group">
+          <label for="data-inicial">Data inicial</label>
+          <input id="data-inicial" type="date" />
+        </div>
+
+        <div class="form-group">
+          <label for="data-final">Data final</label>
+          <input id="data-final" type="date" />
+        </div>
+
+        <button id="apply-date" class="apply-date-btn" type="button">
+          Aplicar período
+        </button>
+      </div>
+
+      <div class="advanced-report-filters">
+        <div class="search-box">
+          <i data-lucide="search"></i>
+          <input id="buscar-relatorio" type="text" placeholder="Buscar produto ou categoria..." />
+        </div>
+
+        <select id="filtro-categoria">
+          <option value="todas">Todas as categorias</option>
+        </select>
+
+        <select id="filtro-pagamento">
+          <option value="todos">Todas as formas</option>
+          <option value="pix">Pix</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="cartao">Cartão</option>
+        </select>
+
+        <select id="ordenar-relatorio">
+          <option value="recentes">Mais recentes</option>
+          <option value="antigas">Mais antigas</option>
+          <option value="maior-valor">Maior valor</option>
+          <option value="menor-valor">Menor valor</option>
+          <option value="maior-quantidade">Maior quantidade</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="reports-shell">
+      <div class="reports-main">
+        <section class="report-kpis">
+          <article class="kpi-card">
+            <span class="kpi-icon blue">
+              <i data-lucide="badge-dollar-sign"></i>
+            </span>
+
+            <div>
+              <p>Faturamento</p>
+              <strong id="kpi-faturamento">R$ 0,00</strong>
+              <small id="kpi-faturamento-desc">Total do filtro atual</small>
+            </div>
+          </article>
+
+          <article class="kpi-card">
+            <span class="kpi-icon cyan">
+              <i data-lucide="shopping-cart"></i>
+            </span>
+
+            <div>
+              <p>Vendas</p>
+              <strong id="kpi-vendas">0</strong>
+              <small id="kpi-vendas-desc">Registros encontrados</small>
+            </div>
+          </article>
+
+          <article class="kpi-card">
+            <span class="kpi-icon green">
+              <i data-lucide="chart-no-axes-combined"></i>
+            </span>
+
+            <div>
+              <p>Ticket médio</p>
+              <strong id="kpi-ticket">R$ 0,00</strong>
+              <small>Média por venda</small>
+            </div>
+          </article>
+
+          <article class="kpi-card">
+            <span class="kpi-icon orange">
+              <i data-lucide="wallet"></i>
+            </span>
+
+            <div>
+              <p>Pagamento destaque</p>
+              <strong id="kpi-pagamento">-</strong>
+              <small id="kpi-pagamento-desc">R$ 0,00</small>
+            </div>
+          </article>
+        </section>
+
+        <section class="charts-row">
+          <article class="report-card large-chart-card">
+            <div class="report-card-header">
+              <div>
+                <h2>Faturamento ao longo do tempo</h2>
+                <p>Valores vendidos por dia no período filtrado.</p>
+              </div>
+
+              <span id="line-total-label">R$ 0,00</span>
+            </div>
+
+            <div class="chart-box line-box">
+              <canvas id="line-chart"></canvas>
+            </div>
+          </article>
+
+          <article class="report-card payment-card">
+            <div class="report-card-header">
+              <div>
+                <h2>Vendas por forma de pagamento</h2>
+                <p>Distribuição financeira das vendas.</p>
+              </div>
+            </div>
+
+            <div class="payment-content">
+              <div class="chart-box doughnut-box">
+                <canvas id="payment-chart"></canvas>
+              </div>
+
+              <div id="payment-legend" class="payment-legend"></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="bottom-row">
+          <article class="report-card ranking-card">
+            <div class="report-card-header">
+              <div>
+                <h2>Produtos mais vendidos</h2>
+                <p>Ranking por quantidade vendida.</p>
+              </div>
+            </div>
+
+            <div id="top-products-list" class="top-products-list"></div>
+          </article>
+
+          <article class="report-card category-card">
+            <div class="report-card-header">
+              <div>
+                <h2>Desempenho por categoria</h2>
+                <p>Faturamento agrupado por categoria.</p>
+              </div>
+            </div>
+
+            <div id="category-list" class="category-list"></div>
+          </article>
+        </section>
+
+        <section class="report-card report-table-card">
+          <div class="report-card-header">
+            <div>
+              <h2>Dados do relatório</h2>
+              <p id="table-count">Nenhuma venda encontrada</p>
+            </div>
+
+            <span class="data-badge">Dados filtrados</span>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="reports-table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Categoria</th>
+                  <th>Quantidade</th>
+                  <th>Pagamento</th>
+                  <th>Valor total</th>
+                  <th>Data</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+
+              <tbody id="lista-relatorio"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <aside class="ai-panel">
+        <section class="ai-card">
+          <div class="ai-card-header">
+            <div>
+              <h2>Fluxter IA</h2>
+              <span>BETA</span>
+            </div>
+          </div>
+
+          <div class="ai-agent-intro">
+            <span>
+              <i data-lucide="sparkles"></i>
+            </span>
+
+            <div>
+              <strong>Seu analista inteligente</strong>
+              <p>Gere análises, insights e recomendações sobre o desempenho do seu negócio.</p>
+            </div>
+          </div>
+
+          <button id="generate-ai-analysis" class="generate-ai-btn" type="button">
+            <i data-lucide="sparkles"></i>
+            Gerar nova análise
+          </button>
+
+          <div class="ai-analysis-card">
+            <div class="ai-analysis-head">
+              <strong id="ai-analysis-title">Análise do relatório</strong>
+              <small id="ai-analysis-time">Agora</small>
+            </div>
+
+            <div id="ai-analysis-content" class="ai-analysis-content">
+              Carregando análise do Fluxter...
+            </div>
+          </div>
+
+          <div class="ai-chat-box">
+            <input id="ai-question" type="text" placeholder="Pergunte algo sobre seus relatórios..." />
+
+            <button id="send-ai-question" type="button">
+              <i data-lucide="send"></i>
+            </button>
+          </div>
+
+          <small class="ai-disclaimer">
+            Use a URL do Webhook do n8n no arquivo relatorios.js para ativar a IA real.
+          </small>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
+  <script src="js/notifications.js"></script>
+  <script src="js/relatorios.js"></script>
+</body>
+</html>
