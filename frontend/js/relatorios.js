@@ -2,13 +2,6 @@ const API_BASE = "https://fluxy-api-r0lt.onrender.com";
 const VENDAS_API = `${API_BASE}/vendas`;
 const PRODUCTS_API = `${API_BASE}/products`;
 
-/*
-  Cole aqui a URL de produção do Webhook do n8n quando criar o fluxo.
-  Exemplo:
-  const N8N_FLUXTER_WEBHOOK_URL = "https://SEU-N8N/webhook/fluxter-relatorio";
-*/
-const N8N_FLUXTER_WEBHOOK_URL = "";
-
 const TOKEN_KEY = "fluxy_token";
 const USER_KEY = "fluxy_user";
 const THEME_KEY = "fluxy_theme";
@@ -57,6 +50,7 @@ const aiAnalysisContent = document.getElementById("ai-analysis-content");
 const aiAnalysisTime = document.getElementById("ai-analysis-time");
 const aiQuestionInput = document.getElementById("ai-question");
 const sendAiQuestionBtn = document.getElementById("send-ai-question");
+const suggestionButtons = document.querySelectorAll(".fluxter-suggestions button");
 
 let vendasGlobais = [];
 let produtosGlobais = [];
@@ -83,9 +77,9 @@ function getTerms() {
     ? JSON.parse(terms)
     : {
         acceptedTerms: false,
-        allowReports: false,
-        allowAI: false,
-        allowSmartNotifications: false
+        allowReports: true,
+        allowAI: true,
+        allowSmartNotifications: true
       };
 }
 
@@ -196,13 +190,13 @@ async function carregarDados() {
 
     atualizarCategorias();
     renderizarRelatorio();
-    gerarAnaliseIA();
+    gerarAnaliseFluxter();
 
     notifyToast(
       "success",
-      "bar-chart-3",
-      "Relatórios carregados",
-      "Os dados do relatório foram atualizados."
+      "message-circle",
+      "Fluxter atualizado",
+      "Os dados do relatório foram analisados."
     );
   } catch (error) {
     console.error(error);
@@ -211,7 +205,7 @@ async function carregarDados() {
     produtosGlobais = [];
 
     renderizarRelatorio();
-    gerarAnaliseIA();
+    gerarAnaliseFluxter();
 
     notifyToast(
       "danger",
@@ -305,34 +299,22 @@ function ordenarRelatorio(vendas) {
 
   switch (ordenacao) {
     case "recentes":
-      return vendasOrdenadas.sort((a, b) => {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      });
+      return vendasOrdenadas.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     case "antigas":
-      return vendasOrdenadas.sort((a, b) => {
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      });
+      return vendasOrdenadas.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
     case "maior-valor":
-      return vendasOrdenadas.sort((a, b) => {
-        return Number(b.valor || 0) - Number(a.valor || 0);
-      });
+      return vendasOrdenadas.sort((a, b) => Number(b.valor || 0) - Number(a.valor || 0));
 
     case "menor-valor":
-      return vendasOrdenadas.sort((a, b) => {
-        return Number(a.valor || 0) - Number(b.valor || 0);
-      });
+      return vendasOrdenadas.sort((a, b) => Number(a.valor || 0) - Number(b.valor || 0));
 
     case "maior-quantidade":
-      return vendasOrdenadas.sort((a, b) => {
-        return Number(b.quantidade || 1) - Number(a.quantidade || 1);
-      });
+      return vendasOrdenadas.sort((a, b) => Number(b.quantidade || 1) - Number(a.quantidade || 1));
 
     default:
-      return vendasOrdenadas.sort((a, b) => {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      });
+      return vendasOrdenadas.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }
 }
 
@@ -666,310 +648,323 @@ function renderizarTabela(vendas) {
   });
 }
 
-async function chamarFluxterN8N(pergunta = "") {
-  const terms = getTerms();
+function getProdutosBaixoEstoque() {
+  return produtosGlobais
+    .filter((produto) => {
+      const minStock = Number(produto.minStock || 0);
+      return minStock > 0 && Number(produto.stock) <= minStock;
+    })
+    .sort((a, b) => Number(a.stock) - Number(b.stock));
+}
 
-  if (!terms.allowAI) {
-    notifyToast(
-      "warning",
-      "bot",
-      "IA não autorizada",
-      "Ative a permissão da IA Fluxter em Configurações."
-    );
-    return null;
+function getProdutosSemEstoque() {
+  return produtosGlobais.filter((produto) => Number(produto.stock || 0) <= 0);
+}
+
+function getIntencao(pergunta) {
+  const texto = pergunta.toLowerCase();
+
+  if (texto.includes("estoque") || texto.includes("repor") || texto.includes("reposição") || texto.includes("baixo") || texto.includes("acabando")) {
+    return "estoque";
   }
 
-  if (!N8N_FLUXTER_WEBHOOK_URL) {
-    return null;
+  if (texto.includes("produto") || texto.includes("mais vendeu") || texto.includes("vendido") || texto.includes("campeão") || texto.includes("destaque")) {
+    return "produto";
   }
 
+  if (texto.includes("categoria") || texto.includes("segmento")) {
+    return "categoria";
+  }
+
+  if (texto.includes("pagamento") || texto.includes("pix") || texto.includes("cartão") || texto.includes("cartao") || texto.includes("dinheiro")) {
+    return "pagamento";
+  }
+
+  if (texto.includes("desempenho") || texto.includes("resultado") || texto.includes("faturamento") || texto.includes("vendas") || texto.includes("ticket")) {
+    return "desempenho";
+  }
+
+  if (texto.includes("oportunidade") || texto.includes("vender mais") || texto.includes("melhorar") || texto.includes("recomend") || texto.includes("fazer")) {
+    return "oportunidade";
+  }
+
+  if (texto.includes("importante") || texto.includes("resumo") || texto.includes("relatório") || texto.includes("relatorio")) {
+    return "resumo";
+  }
+
+  return "geral";
+}
+
+function analisarDesempenho() {
   const vendas = obterVendasTratadas();
   const resumo = getResumo(vendas);
-  const user = getUser();
+  const produtoTop = resumo.produtos[0];
+  const categoriaTop = resumo.categorias[0];
+  const pagamentoTop = resumo.pagamentos[0];
 
-  const payload = {
-    businessName: user.businessName || "Fluxy",
-    periodo: getPeriodLabel(),
-    filtros: {
-      categoria: filtroCategoriaInput.value,
-      pagamento: filtroPagamentoInput.value,
-      busca: buscarInput.value || "",
-      ordenacao: ordenarInput.value
-    },
-    resumo: {
-      total: resumo.total,
-      quantidade: resumo.quantidade,
-      itens: resumo.itens,
-      ticket: resumo.ticket
-    },
-    destaques: {
-      produto: resumo.produtos[0] || null,
-      categoria: resumo.categorias[0] || null,
-      pagamento: resumo.pagamentos[0] || null
-    },
-    estoque: produtosGlobais.map((produto) => ({
-      name: produto.name,
-      category: produto.category,
-      stock: produto.stock,
-      minStock: produto.minStock
-    })),
-    vendas: vendas.slice(0, 50).map((venda) => ({
-      produto: venda.produto,
-      categoria: venda.categoria || "Sem categoria",
-      quantidade: venda.quantidade || 1,
-      pagamento: venda.pagamento,
-      valor: venda.valor,
-      data: venda.createdAt
-    })),
-    pergunta
-  };
-
-  const response = await fetch(N8N_FLUXTER_WEBHOOK_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    throw new Error("Erro ao consultar o Fluxter IA no n8n.");
+  if (!vendas.length) {
+    return `
+      <p>Eu ainda não encontrei vendas no filtro atual. Para gerar uma análise melhor, registre vendas ou altere o período do relatório.</p>
+    `;
   }
 
-  return response.json();
+  return `
+    <p>
+      No período <strong>${getPeriodLabel()}</strong>, seu negócio faturou
+      <strong>${formatMoney(resumo.total)}</strong>, com
+      <strong>${resumo.quantidade}</strong> venda(s) e ticket médio de
+      <strong>${formatMoney(resumo.ticket)}</strong>.
+    </p>
+
+    <p>
+      O produto de maior destaque foi <strong>${produtoTop?.nome || "-"}</strong>,
+      e a categoria com melhor resultado foi <strong>${categoriaTop?.nome || "-"}</strong>.
+      A forma de pagamento mais forte foi <strong>${pagamentoTop?.nome || "-"}</strong>.
+    </p>
+
+    <p>
+      Minha sugestão: acompanhe os produtos líderes e mantenha estoque disponível para não perder vendas nos itens com maior saída.
+    </p>
+  `;
 }
 
-async function gerarAnaliseIA() {
-  const terms = getTerms();
+function analisarProduto() {
+  const resumo = getResumo(obterVendasTratadas());
+  const produtoTop = resumo.produtos[0];
 
-  aiAnalysisTime.textContent = formatDate(new Date());
+  if (!produtoTop) {
+    return `<p>Não encontrei produtos vendidos no filtro atual.</p>`;
+  }
 
-  if (!terms.allowAI) {
-    aiAnalysisContent.innerHTML = `
+  return `
+    <p>
+      O produto que mais vendeu foi <strong>${produtoTop.nome}</strong>,
+      com <strong>${produtoTop.quantidade}</strong> unidade(s) vendidas e
+      <strong>${formatMoney(produtoTop.valor)}</strong> em faturamento.
+    </p>
+
+    <p>
+      Esse produto merece atenção especial. Vale destacar esse item em promoções,
+      verificar se o estoque está saudável e observar se ele continua tendo boa saída nos próximos períodos.
+    </p>
+  `;
+}
+
+function analisarCategoria() {
+  const resumo = getResumo(obterVendasTratadas());
+  const categoriaTop = resumo.categorias[0];
+
+  if (!categoriaTop) {
+    return `<p>Não encontrei categorias com vendas no filtro atual.</p>`;
+  }
+
+  return `
+    <p>
+      A categoria com melhor faturamento foi <strong>${categoriaTop.nome}</strong>,
+      somando <strong>${formatMoney(categoriaTop.valor)}</strong> e
+      <strong>${categoriaTop.quantidade}</strong> unidade(s) vendidas.
+    </p>
+
+    <p>
+      Essa categoria pode indicar uma preferência dos seus clientes. Minha sugestão é acompanhar quais produtos dela têm maior saída e priorizar reposição ou divulgação.
+    </p>
+  `;
+}
+
+function analisarPagamento() {
+  const resumo = getResumo(obterVendasTratadas());
+  const pagamentoTop = resumo.pagamentos[0];
+
+  if (!pagamentoTop) {
+    return `<p>Não encontrei formas de pagamento no filtro atual.</p>`;
+  }
+
+  const percentual = resumo.total > 0 ? ((pagamentoTop.valor / resumo.total) * 100).toFixed(1) : 0;
+
+  return `
+    <p>
+      A forma de pagamento em destaque foi <strong>${pagamentoTop.nome}</strong>,
+      representando <strong>${percentual}%</strong> do faturamento filtrado,
+      com total de <strong>${formatMoney(pagamentoTop.valor)}</strong>.
+    </p>
+
+    <p>
+      Isso ajuda você a entender o comportamento dos seus clientes e pode orientar decisões sobre promoções, taxas e organização financeira.
+    </p>
+  `;
+}
+
+function analisarEstoque() {
+  const produtosBaixo = getProdutosBaixoEstoque();
+  const produtosSemEstoque = getProdutosSemEstoque();
+
+  if (!produtosBaixo.length && !produtosSemEstoque.length) {
+    return `
       <p>
-        A análise inteligente do Fluxter ainda não está ativada.
-        Vá em <strong>Configurações &gt; Permissões</strong> e marque
-        <strong>Permitir análise da IA Fluxter</strong>.
+        No momento, não encontrei produtos abaixo do estoque mínimo. Seu estoque parece saudável com base nos dados cadastrados.
+      </p>
+
+      <p>
+        Minha sugestão: continue mantendo o estoque mínimo atualizado para que a Fluxy consiga avisar quando algum item precisar de reposição.
       </p>
     `;
-    return;
   }
 
-  if (N8N_FLUXTER_WEBHOOK_URL) {
-    try {
-      aiAnalysisContent.innerHTML = `<p>Fluxter está analisando seus dados...</p>`;
+  const urgente = produtosSemEstoque[0] || produtosBaixo[0];
 
-      const data = await chamarFluxterN8N();
+  return `
+    <p>
+      Encontrei <strong>${produtosBaixo.length}</strong> produto(s) em estoque baixo
+      e <strong>${produtosSemEstoque.length}</strong> produto(s) sem estoque.
+    </p>
 
-      if (data?.resposta) {
-        aiAnalysisContent.innerHTML = data.resposta;
-        aiAnalysisTime.textContent = formatDate(new Date());
-        return;
-      }
+    <p>
+      O item mais urgente para verificar é <strong>${urgente.name}</strong>,
+      com <strong>${urgente.stock}</strong> unidade(s) disponíveis
+      ${urgente.minStock ? `e estoque mínimo de <strong>${urgente.minStock}</strong>.` : "."}
+    </p>
 
-      if (data?.analysis) {
-        aiAnalysisContent.innerHTML = data.analysis;
-        aiAnalysisTime.textContent = formatDate(new Date());
-        return;
-      }
-
-      if (typeof data === "string") {
-        aiAnalysisContent.innerHTML = data;
-        aiAnalysisTime.textContent = formatDate(new Date());
-        return;
-      }
-    } catch (error) {
-      console.error(error);
-
-      notifyToast(
-        "warning",
-        "bot",
-        "Fluxter offline",
-        "Usei a análise local porque o n8n não respondeu."
-      );
-    }
-  }
-
-  gerarAnaliseLocal();
+    <p>
+      Minha recomendação: priorize a reposição dos itens zerados ou abaixo do mínimo, principalmente se eles também aparecem entre os produtos mais vendidos.
+    </p>
+  `;
 }
 
-function gerarAnaliseLocal() {
+function analisarOportunidade() {
+  const vendas = obterVendasTratadas();
+  const resumo = getResumo(vendas);
+  const produtosBaixo = getProdutosBaixoEstoque();
+
+  if (!vendas.length) {
+    return `
+      <p>
+        Ainda não há vendas suficientes no filtro atual para identificar uma oportunidade clara.
+      </p>
+
+      <p>
+        Comece registrando vendas com produto, quantidade e forma de pagamento para que eu consiga cruzar os dados.
+      </p>
+    `;
+  }
+
+  const produtoTop = resumo.produtos[0];
+  const categoriaTop = resumo.categorias[0];
+
+  const produtoTopNoEstoque = produtosGlobais.find((produto) => produto.name === produtoTop?.nome);
+  const produtoTopBaixo = produtoTopNoEstoque && produtoTopNoEstoque.minStock && Number(produtoTopNoEstoque.stock) <= Number(produtoTopNoEstoque.minStock);
+
+  if (produtoTopBaixo) {
+    return `
+      <p>
+        Vejo uma oportunidade importante: <strong>${produtoTop.nome}</strong> é um dos produtos mais vendidos,
+        mas está com estoque baixo.
+      </p>
+
+      <p>
+        Minha recomendação é repor esse produto primeiro, porque ele já demonstrou saída no período analisado.
+        Assim você reduz o risco de perder vendas.
+      </p>
+    `;
+  }
+
+  return `
+    <p>
+      A principal oportunidade está em reforçar a categoria <strong>${categoriaTop?.nome || "-"}</strong>,
+      que teve o melhor faturamento no período.
+    </p>
+
+    <p>
+      Também vale destacar o produto <strong>${produtoTop?.nome || "-"}</strong>, que liderou em quantidade vendida.
+      Você pode usar esse item como chamariz em ofertas, kits ou campanhas.
+    </p>
+  `;
+}
+
+function gerarResumoGeral() {
   const vendas = obterVendasTratadas();
   const resumo = getResumo(vendas);
 
   if (!vendas.length) {
-    aiAnalysisContent.innerHTML = `
+    return `
       <p>
-        Ainda não encontrei vendas no filtro atual. Registre vendas ou altere os filtros
-        para que eu possa gerar uma análise mais completa.
+        Eu ainda não encontrei vendas no filtro atual. Quando houver registros, consigo mostrar produtos, categorias, pagamentos e oportunidades.
       </p>
     `;
-    return;
   }
 
-  const produtoTop = resumo.produtos[0];
-  const pagamentoTop = resumo.pagamentos[0];
-  const categoriaTop = resumo.categorias[0];
-
-  const produtosBaixo = produtosGlobais.filter((produto) => {
-    const minStock = Number(produto.minStock || 0);
-    return minStock > 0 && Number(produto.stock) <= minStock;
-  });
-
-  const alertaEstoque = produtosBaixo.length
-    ? `
-      <h4 class="warning">⚠️ Atenção ao estoque</h4>
-      <p>
-        Existem ${produtosBaixo.length} produto(s) em estoque baixo.
-        Verifique principalmente: ${produtosBaixo.slice(0, 3).map((p) => p.name).join(", ")}.
-      </p>
-    `
-    : `
-      <h4 class="positive">✅ Estoque sem alertas críticos</h4>
-      <p>Não encontrei produtos abaixo do estoque mínimo no momento.</p>
-    `;
-
-  aiAnalysisContent.innerHTML = `
+  return `
     <p>
-      Olá! Aqui está minha análise dos dados do período <strong>${getPeriodLabel()}</strong>.
+      O ponto mais importante do relatório é que o período <strong>${getPeriodLabel()}</strong>
+      gerou <strong>${formatMoney(resumo.total)}</strong> em faturamento,
+      com <strong>${resumo.quantidade}</strong> venda(s).
     </p>
 
-    <h4 class="positive">📈 Desempenho do período</h4>
     <p>
-      O faturamento filtrado foi de <strong>${formatMoney(resumo.total)}</strong>,
-      com <strong>${resumo.quantidade}</strong> venda(s) e
-      <strong>${resumo.itens}</strong> item(ns) vendidos.
+      Produto destaque: <strong>${resumo.produtos[0]?.nome || "-"}</strong>.<br>
+      Categoria destaque: <strong>${resumo.categorias[0]?.nome || "-"}</strong>.<br>
+      Pagamento destaque: <strong>${resumo.pagamentos[0]?.nome || "-"}</strong>.
     </p>
 
-    <h4 class="info">🏆 Produto em destaque</h4>
     <p>
-      O produto <strong>${produtoTop?.nome || "-"}</strong> liderou em quantidade,
-      com <strong>${produtoTop?.quantidade || 0}</strong> unidade(s) vendidas.
-    </p>
-
-    <h4 class="info">💳 Pagamento em destaque</h4>
-    <p>
-      A forma de pagamento mais relevante foi <strong>${pagamentoTop?.nome || "-"}</strong>,
-      somando <strong>${formatMoney(pagamentoTop?.valor || 0)}</strong>.
-    </p>
-
-    <h4 class="info">🏷️ Categoria forte</h4>
-    <p>
-      A categoria com melhor faturamento foi <strong>${categoriaTop?.nome || "-"}</strong>,
-      com <strong>${formatMoney(categoriaTop?.valor || 0)}</strong>.
-    </p>
-
-    ${alertaEstoque}
-
-    <p>
-      Minha recomendação: acompanhe os produtos mais vendidos e mantenha o estoque mínimo
-      atualizado para evitar perda de vendas.
+      Minha sugestão é acompanhar esses três pontos juntos: produto, categoria e estoque. Eles mostram onde o negócio está performando melhor e onde pode haver oportunidade.
     </p>
   `;
 }
 
-async function responderPerguntaIA() {
+function responderFluxter(pergunta) {
+  const intencao = getIntencao(pergunta);
+
+  if (intencao === "estoque") return analisarEstoque();
+  if (intencao === "produto") return analisarProduto();
+  if (intencao === "categoria") return analisarCategoria();
+  if (intencao === "pagamento") return analisarPagamento();
+  if (intencao === "desempenho") return analisarDesempenho();
+  if (intencao === "oportunidade") return analisarOportunidade();
+  if (intencao === "resumo") return gerarResumoGeral();
+
+  return `
+    <p>
+      Posso te ajudar com desempenho, produto mais vendido, categoria destaque,
+      forma de pagamento, estoque baixo e oportunidades de venda.
+    </p>
+
+    <p>
+      Pelo filtro atual, o resumo geral é: ${gerarResumoGeral()}
+    </p>
+  `;
+}
+
+function gerarAnaliseFluxter() {
+  aiAnalysisTime.textContent = formatDate(new Date());
+  aiAnalysisContent.innerHTML = gerarResumoGeral();
+}
+
+function responderPerguntaFluxter() {
   const pergunta = aiQuestionInput.value.trim();
 
   if (!pergunta) return;
 
-  const terms = getTerms();
-
-  if (!terms.allowAI) {
-    notifyToast(
-      "warning",
-      "bot",
-      "IA não autorizada",
-      "Ative a permissão da IA Fluxter em Configurações."
-    );
-    return;
-  }
-
-  if (N8N_FLUXTER_WEBHOOK_URL) {
-    try {
-      aiAnalysisContent.innerHTML += `
-        <h4 class="info">💬 Pergunta</h4>
-        <p><strong>${pergunta}</strong></p>
-        <p>Fluxter está consultando o n8n...</p>
-      `;
-
-      const data = await chamarFluxterN8N(pergunta);
-
-      const respostaN8N =
-        data?.resposta ||
-        data?.answer ||
-        data?.analysis ||
-        (typeof data === "string" ? data : "");
-
-      if (respostaN8N) {
-        aiAnalysisContent.innerHTML += `
-          <h4 class="positive">🤖 Resposta do Fluxter</h4>
-          <p>${respostaN8N}</p>
-        `;
-
-        aiQuestionInput.value = "";
-        return;
-      }
-    } catch (error) {
-      console.error(error);
-
-      notifyToast(
-        "warning",
-        "bot",
-        "Fluxter offline",
-        "Usei uma resposta local porque o n8n não respondeu."
-      );
-    }
-  }
-
-  responderPerguntaLocal(pergunta);
-  aiQuestionInput.value = "";
-}
-
-function responderPerguntaLocal(pergunta) {
-  const vendas = obterVendasTratadas();
-  const resumo = getResumo(vendas);
-  const perguntaLower = pergunta.toLowerCase();
-
-  let resposta = "";
-
-  if (perguntaLower.includes("produto")) {
-    const produtoTop = resumo.produtos[0];
-
-    resposta = produtoTop
-      ? `O produto de maior destaque é ${produtoTop.nome}, com ${produtoTop.quantidade} unidade(s) vendidas e ${formatMoney(produtoTop.valor)} em faturamento.`
-      : "Não encontrei produtos vendidos no filtro atual.";
-  } else if (perguntaLower.includes("pagamento") || perguntaLower.includes("pix") || perguntaLower.includes("cart")) {
-    const pagamentoTop = resumo.pagamentos[0];
-
-    resposta = pagamentoTop
-      ? `A forma de pagamento em destaque é ${pagamentoTop.nome}, somando ${formatMoney(pagamentoTop.valor)}.`
-      : "Não encontrei pagamentos no filtro atual.";
-  } else if (perguntaLower.includes("categoria")) {
-    const categoriaTop = resumo.categorias[0];
-
-    resposta = categoriaTop
-      ? `A categoria mais forte é ${categoriaTop.nome}, com ${formatMoney(categoriaTop.valor)} em vendas.`
-      : "Não encontrei categorias no filtro atual.";
-  } else if (perguntaLower.includes("estoque")) {
-    const produtosBaixo = produtosGlobais.filter((produto) => {
-      const minStock = Number(produto.minStock || 0);
-      return minStock > 0 && Number(produto.stock) <= minStock;
-    });
-
-    resposta = produtosBaixo.length
-      ? `Existem ${produtosBaixo.length} produto(s) em atenção no estoque: ${produtosBaixo.slice(0, 4).map((p) => p.name).join(", ")}.`
-      : "Não encontrei produtos abaixo do estoque mínimo.";
-  } else {
-    resposta = `No filtro atual, você teve ${resumo.quantidade} venda(s), totalizando ${formatMoney(resumo.total)}. O ticket médio ficou em ${formatMoney(resumo.ticket)}.`;
-  }
+  const resposta = responderFluxter(pergunta);
 
   aiAnalysisContent.innerHTML += `
-    <h4 class="info">💬 Pergunta</h4>
+    <h4 class="info">Você perguntou:</h4>
     <p><strong>${pergunta}</strong></p>
-    <h4 class="positive">🤖 Resposta do Fluxter</h4>
-    <p>${resposta}</p>
+
+    <h4 class="positive">Fluxter respondeu:</h4>
+    ${resposta}
   `;
+
+  aiAnalysisTime.textContent = formatDate(new Date());
+  aiQuestionInput.value = "";
+
+  aiAnalysisContent.scrollTop = aiAnalysisContent.scrollHeight;
+
+  notifyToast(
+    "success",
+    "message-circle",
+    "Fluxter respondeu",
+    "A resposta foi gerada com base nos dados do relatório."
+  );
 }
 
 function getExportRows() {
@@ -1232,7 +1227,7 @@ periodButtons.forEach((button) => {
     dataFinalInput.value = "";
 
     renderizarRelatorio();
-    gerarAnaliseIA();
+    gerarAnaliseFluxter();
   });
 });
 
@@ -1261,7 +1256,7 @@ applyDateBtn.addEventListener("click", () => {
   }
 
   renderizarRelatorio();
-  gerarAnaliseIA();
+  gerarAnaliseFluxter();
 
   notifyToast(
     "success",
@@ -1273,17 +1268,17 @@ applyDateBtn.addEventListener("click", () => {
 
 buscarInput.addEventListener("input", () => {
   renderizarRelatorio();
-  gerarAnaliseIA();
+  gerarAnaliseFluxter();
 });
 
 filtroCategoriaInput.addEventListener("change", () => {
   renderizarRelatorio();
-  gerarAnaliseIA();
+  gerarAnaliseFluxter();
 });
 
 filtroPagamentoInput.addEventListener("change", () => {
   renderizarRelatorio();
-  gerarAnaliseIA();
+  gerarAnaliseFluxter();
 });
 
 ordenarInput.addEventListener("change", () => {
@@ -1315,7 +1310,7 @@ clearFiltersBtn.addEventListener("click", () => {
   });
 
   renderizarRelatorio();
-  gerarAnaliseIA();
+  gerarAnaliseFluxter();
 
   notifyToast(
     "info",
@@ -1326,7 +1321,7 @@ clearFiltersBtn.addEventListener("click", () => {
 });
 
 generateAiBtn.addEventListener("click", () => {
-  gerarAnaliseIA();
+  gerarAnaliseFluxter();
 
   notifyToast(
     "success",
@@ -1336,12 +1331,19 @@ generateAiBtn.addEventListener("click", () => {
   );
 });
 
-sendAiQuestionBtn.addEventListener("click", responderPerguntaIA);
+sendAiQuestionBtn.addEventListener("click", responderPerguntaFluxter);
 
 aiQuestionInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
-    responderPerguntaIA();
+    responderPerguntaFluxter();
   }
+});
+
+suggestionButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    aiQuestionInput.value = button.dataset.question;
+    responderPerguntaFluxter();
+  });
 });
 
 exportXlsxBtn.addEventListener("click", exportarExcel);

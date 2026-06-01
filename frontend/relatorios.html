@@ -51,12 +51,12 @@
 
     <div class="ai-menu-card">
       <span>
-        <i data-lucide="sparkles"></i>
+        <i data-lucide="message-circle"></i>
       </span>
 
       <div>
-        <strong>Fluxter IA</strong>
-        <small>Relatórios inteligentes</small>
+        <strong>Fluxter</strong>
+        <small>Assistente inteligente</small>
       </div>
     </div>
   </aside>
@@ -298,23 +298,51 @@
         </section>
       </div>
 
-      <aside class="ai-panel">
-        <section class="ai-card">
-          <div class="ai-card-header">
+      <aside class="ai-panel fluxter-panel">
+        <section class="ai-card fluxter-card">
+          <div class="fluxter-profile">
+            <div class="fluxter-avatar-wrap">
+              <img src="assets/fluxter-profile.png" alt="Fluxter" class="fluxter-avatar" />
+              <span class="fluxter-online"></span>
+            </div>
+
             <div>
-              <h2>Fluxter IA</h2>
-              <span>BETA</span>
+              <div class="fluxter-title-row">
+                <h2>Fluxter</h2>
+                <span>BETA</span>
+              </div>
+
+              <p>Assistente Inteligente da Fluxy</p>
             </div>
           </div>
 
-          <div class="ai-agent-intro">
-            <span>
-              <i data-lucide="sparkles"></i>
-            </span>
+          <div class="fluxter-local-badge">
+            <i data-lucide="cpu"></i>
+            Funciona grátis com os dados do seu sistema
+          </div>
 
-            <div>
-              <strong>Seu analista inteligente</strong>
-              <p>Gere análises, insights e recomendações sobre o desempenho do seu negócio.</p>
+          <div class="fluxter-chat-window">
+            <div class="fluxter-message assistant">
+              <img src="assets/fluxter-profile.png" alt="Fluxter" />
+
+              <div>
+                <strong>Fluxter</strong>
+                <p>
+                  Oi! Eu analiso suas vendas, estoque, pagamentos e categorias usando os dados da Fluxy.
+                  Pode me perguntar sobre desempenho, produtos, estoque ou oportunidades.
+                </p>
+              </div>
+            </div>
+
+            <div class="ai-analysis-card fluxter-analysis-card">
+              <div class="ai-analysis-head">
+                <strong id="ai-analysis-title">Análise do relatório</strong>
+                <small id="ai-analysis-time">Agora</small>
+              </div>
+
+              <div id="ai-analysis-content" class="ai-analysis-content">
+                Carregando análise do Fluxter...
+              </div>
             </div>
           </div>
 
@@ -323,27 +351,23 @@
             Gerar nova análise
           </button>
 
-          <div class="ai-analysis-card">
-            <div class="ai-analysis-head">
-              <strong id="ai-analysis-title">Análise do relatório</strong>
-              <small id="ai-analysis-time">Agora</small>
-            </div>
-
-            <div id="ai-analysis-content" class="ai-analysis-content">
-              Carregando análise do Fluxter...
-            </div>
+          <div class="fluxter-suggestions">
+            <button type="button" data-question="Como está meu desempenho?">Desempenho</button>
+            <button type="button" data-question="Qual produto mais vendeu?">Produto destaque</button>
+            <button type="button" data-question="Quais produtos estão com estoque baixo?">Estoque</button>
+            <button type="button" data-question="O que posso fazer para vender mais?">Oportunidade</button>
           </div>
 
           <div class="ai-chat-box">
-            <input id="ai-question" type="text" placeholder="Pergunte algo sobre seus relatórios..." />
+            <input id="ai-question" type="text" placeholder="Pergunte algo ao Fluxter..." />
 
-            <button id="send-ai-question" type="button">
+            <button id="send-ai-question" type="button" title="Enviar pergunta">
               <i data-lucide="send"></i>
             </button>
           </div>
 
           <small class="ai-disclaimer">
-            Use a URL do Webhook do n8n no arquivo relatorios.js para ativar a IA real.
+            Esta versão responde com análises locais baseadas nos dados reais cadastrados na Fluxy.
           </small>
         </section>
       </aside>

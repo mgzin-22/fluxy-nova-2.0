@@ -321,7 +321,7 @@
 
 .reports-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) 380px;
   gap: 22px;
   align-items: start;
 }
@@ -711,27 +711,64 @@
 }
 
 .ai-card {
-  border-radius: 18px;
+  border-radius: 20px;
   overflow: hidden;
 }
 
-.ai-card-header {
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
+.fluxter-card {
+  position: relative;
 }
 
-.ai-card-header div {
+.fluxter-profile {
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(circle at 20% 10%, rgba(52, 152, 219, 0.24), transparent 34%),
+    radial-gradient(circle at 90% 0%, rgba(26, 188, 156, 0.18), transparent 35%);
+}
+
+.fluxter-avatar-wrap {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  min-width: 70px;
+}
+
+.fluxter-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 22px;
+  object-fit: cover;
+  border: 2px solid rgba(52, 152, 219, 0.75);
+  box-shadow: 0 12px 30px rgba(52, 152, 219, 0.28);
+}
+
+.fluxter-online {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  background: #22c55e;
+  border: 3px solid #0f172a;
+}
+
+.fluxter-title-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.ai-card-header h2 {
+.fluxter-title-row h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 21px;
 }
 
-.ai-card-header span {
+.fluxter-title-row span {
   padding: 4px 8px;
   border-radius: 999px;
   color: #93c5fd;
@@ -740,66 +777,80 @@
   font-weight: 800;
 }
 
-.ai-agent-intro {
-  padding: 18px 16px;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.ai-agent-intro span {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  border-radius: 15px;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-}
-
-.ai-agent-intro span svg {
-  width: 24px;
-  height: 24px;
-}
-
-.ai-agent-intro strong {
-  display: block;
-  color: var(--text);
-  font-size: 14px;
-}
-
-.ai-agent-intro p {
-  margin: 6px 0 0;
+.fluxter-profile p {
+  margin: 5px 0 0;
   color: var(--muted);
   font-size: 13px;
+  font-weight: 700;
+}
+
+.fluxter-local-badge {
+  margin: 14px 16px 0;
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: 13px;
+  color: var(--secondary);
+  background: rgba(26, 188, 156, 0.12);
+  border: 1px solid rgba(26, 188, 156, 0.18);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.fluxter-local-badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.fluxter-chat-window {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.fluxter-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.fluxter-message img {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 13px;
+  object-fit: cover;
+  border: 1px solid rgba(52, 152, 219, 0.45);
+}
+
+.fluxter-message div {
+  padding: 11px 12px;
+  border-radius: 16px 16px 16px 5px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--border);
+}
+
+.fluxter-message strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.fluxter-message p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
   line-height: 1.45;
 }
 
-.generate-ai-btn {
-  width: calc(100% - 32px);
-  height: 46px;
-  margin: 0 16px 16px;
-  border: none;
-  border-radius: 13px;
-  color: #fff;
-  font: inherit;
-  font-weight: 800;
-  cursor: pointer;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-}
-
-.generate-ai-btn svg {
-  width: 18px;
-  height: 18px;
+.fluxter-analysis-card {
+  margin: 0;
 }
 
 .ai-analysis-card {
-  margin: 0 16px 14px;
   padding: 14px;
   border-radius: 16px;
   background: var(--card-strong);
@@ -849,6 +900,55 @@
 
 .ai-analysis-content .info {
   color: #60a5fa;
+}
+
+.generate-ai-btn {
+  width: calc(100% - 32px);
+  height: 46px;
+  margin: 0 16px 14px;
+  border: none;
+  border-radius: 13px;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.generate-ai-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.fluxter-suggestions {
+  padding: 0 16px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fluxter-suggestions button {
+  min-height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--card-strong);
+  padding: 0 11px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.fluxter-suggestions button:hover {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
 }
 
 .ai-chat-box {
@@ -964,5 +1064,9 @@
 
   .apply-date-btn {
     width: 100%;
+  }
+
+  .fluxter-profile {
+    align-items: flex-start;
   }
 }
