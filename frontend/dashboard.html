@@ -47,7 +47,6 @@
         </a>
       </nav>
     </div>
-
   </aside>
 
   <main class="dashboard dashboard-page">
@@ -58,8 +57,6 @@
       </div>
 
       <div class="topbar-actions">
-        <button id="toggle-theme" class="theme-btn" type="button">🌙</button>
-
         <div class="notification-wrapper">
           <button id="notification-btn" class="notification-btn" type="button" title="Notificações">
             <i data-lucide="bell"></i>
@@ -209,6 +206,21 @@
           </div>
         </div>
       </article>
+
+      <article class="chart-card category-chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Faturamento por categoria</h3>
+            <p>Comparação das categorias com maior faturamento</p>
+          </div>
+
+          <span id="category-total-label">R$ 0,00</span>
+        </div>
+
+        <div class="chart-box category-bar-box">
+          <canvas id="grafico-categoria"></canvas>
+        </div>
+      </article>
     </section>
 
     <section class="dashboard-bottom-grid">
@@ -264,7 +276,7 @@
         </div>
       </div>
 
-      <button type="button" class="btn-primary" onclick="window.location.href='#'">
+      <button type="button" class="btn-primary" onclick="window.location.href='relatorios.html'">
         Ver relatórios
         <i data-lucide="arrow-right"></i>
       </button>

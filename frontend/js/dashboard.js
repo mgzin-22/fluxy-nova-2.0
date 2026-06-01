@@ -3,7 +3,6 @@ const TOKEN_KEY = "fluxy_token";
 const USER_KEY = "fluxy_user";
 const THEME_KEY = "fluxy_theme";
 
-const themeBtn = document.getElementById("toggle-theme");
 const userName = document.getElementById("user-name");
 
 const totalVendidoEl = document.getElementById("total-vendido");
@@ -16,6 +15,7 @@ const alertCountEl = document.getElementById("alert-count");
 
 const totalPeriodoLabelEl = document.getElementById("total-periodo-label");
 const chartTotalLabelEl = document.getElementById("chart-total-label");
+const categoryTotalLabelEl = document.getElementById("category-total-label");
 
 const resumoPixEl = document.getElementById("resumo-pix");
 const resumoCartaoEl = document.getElementById("resumo-cartao");
@@ -39,6 +39,7 @@ const notificationList = document.getElementById("notification-list");
 
 let graficoLinha = null;
 let graficoPizza = null;
+let graficoCategoria = null;
 
 let vendasGlobais = [];
 let produtosGlobais = [];
@@ -95,23 +96,6 @@ function getProductInitial(name) {
 function aplicarTemaSalvo() {
   const savedTheme = localStorage.getItem(THEME_KEY) || "dark";
   document.body.classList.toggle("light", savedTheme === "light");
-
-  if (themeBtn) {
-    themeBtn.textContent = savedTheme === "light" ? "☀️" : "🌙";
-  }
-}
-
-function alternarTema() {
-  document.body.classList.toggle("light");
-
-  const isLight = document.body.classList.contains("light");
-  localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
-
-  if (themeBtn) {
-    themeBtn.textContent = isLight ? "☀️" : "🌙";
-  }
-
-  aplicarFiltro();
 }
 
 function preencherUsuario() {
@@ -274,6 +258,10 @@ function renderizarCards(vendas) {
 
   totalPeriodoLabelEl.textContent = labels[filtroAtual] || "No período selecionado";
   chartTotalLabelEl.textContent = formatMoney(totalPeriodo);
+
+  if (categoryTotalLabelEl) {
+    categoryTotalLabelEl.textContent = formatMoney(totalPeriodo);
+  }
 }
 
 function agruparVendasPorDia(vendas) {
@@ -298,12 +286,17 @@ function renderizarGraficos(vendas) {
   let dinheiro = 0;
   let cartao = 0;
 
+  const categorias = {};
+
   vendas.forEach((venda) => {
     const valor = Number(venda.valor || 0);
+    const categoria = venda.categoria || venda.product?.category || "Sem categoria";
 
     if (venda.pagamento === "pix") pix += valor;
     if (venda.pagamento === "dinheiro") dinheiro += valor;
     if (venda.pagamento === "cartao") cartao += valor;
+
+    categorias[categoria] = (categorias[categoria] || 0) + valor;
   });
 
   resumoPixEl.textContent = formatMoney(pix);
@@ -312,9 +305,13 @@ function renderizarGraficos(vendas) {
 
   if (graficoLinha) graficoLinha.destroy();
   if (graficoPizza) graficoPizza.destroy();
+  if (graficoCategoria) graficoCategoria.destroy();
 
   const lineCtx = document.getElementById("grafico-linha");
   const pieCtx = document.getElementById("grafico-pizza");
+  const categoryCtx = document.getElementById("grafico-categoria");
+
+  const fluxyColors = ["#3498db", "#1abc9c", "#22c55e", "#f59e0b", "#60a5fa"];
 
   graficoLinha = new Chart(lineCtx, {
     type: "line",
@@ -325,7 +322,7 @@ function renderizarGraficos(vendas) {
           label: "Vendas",
           data: Object.values(dias),
           borderColor: "#3498db",
-          backgroundColor: "rgba(52, 152, 219, 0.18)",
+          backgroundColor: "rgba(52, 152, 219, 0.2)",
           tension: 0.45,
           fill: true,
           pointRadius: 4,
@@ -375,7 +372,7 @@ function renderizarGraficos(vendas) {
       datasets: [
         {
           data: [pix, cartao, dinheiro],
-          backgroundColor: ["#1abc9c", "#3498db", "#8b5cf6"],
+          backgroundColor: ["#3498db", "#1abc9c", "#22c55e"],
           borderWidth: 0,
           hoverOffset: 8
         }
@@ -392,6 +389,65 @@ function renderizarGraficos(vendas) {
         tooltip: {
           callbacks: {
             label: (context) => `${context.label}: ${formatMoney(context.raw)}`
+          }
+        }
+      }
+    }
+  });
+
+  const categoriasOrdenadas = Object.entries(categorias)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  graficoCategoria = new Chart(categoryCtx, {
+    type: "bar",
+    data: {
+      labels: categoriasOrdenadas.map(([categoria]) => categoria),
+      datasets: [
+        {
+          label: "Faturamento",
+          data: categoriasOrdenadas.map(([, valor]) => valor),
+          backgroundColor: fluxyColors,
+          borderRadius: 10,
+          borderSkipped: false,
+          maxBarThickness: 54
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => formatMoney(context.raw)
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: "#94a3b8",
+            font: {
+              size: 12,
+              weight: "600"
+            }
+          },
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: "#94a3b8",
+            callback: (value) => formatMoney(value)
+          },
+          grid: {
+            color: "rgba(148, 163, 184, 0.08)"
           }
         }
       }
@@ -790,10 +846,6 @@ preencherUsuario();
 configurarFiltros();
 carregarDados();
 
-if (themeBtn) {
-  themeBtn.addEventListener("click", alternarTema);
-}
-
 if (notificationBtn) {
   notificationBtn.addEventListener("click", abrirNotificacoes);
 }
@@ -816,4 +868,4 @@ document.addEventListener("click", (event) => {
 
 if (window.lucide) {
   lucide.createIcons();
-}
+} 
