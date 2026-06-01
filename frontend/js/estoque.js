@@ -7,7 +7,6 @@ const token = localStorage.getItem(TOKEN_KEY);
 
 const lista = document.getElementById("lista-produtos");
 const formProduto = document.getElementById("form-produto");
-const themeBtn = document.getElementById("toggle-theme");
 const feedback = document.getElementById("estoque-feedback");
 const productsCount = document.getElementById("products-count");
 
@@ -55,22 +54,8 @@ if (!token) {
 function aplicarTemaSalvo() {
   const savedTheme = localStorage.getItem(THEME_KEY) || "dark";
   document.body.classList.toggle("light", savedTheme === "light");
-
-  if (themeBtn) {
-    themeBtn.textContent = savedTheme === "light" ? "☀️" : "🌙";
-  }
 }
 
-function alternarTema() {
-  document.body.classList.toggle("light");
-
-  const isLight = document.body.classList.contains("light");
-  localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
-
-  if (themeBtn) {
-    themeBtn.textContent = isLight ? "☀️" : "🌙";
-  }
-}
 
 function formatMoney(value) {
   return Number(value).toLocaleString("pt-BR", {
@@ -651,9 +636,6 @@ function sair() {
 aplicarTemaSalvo();
 carregarProdutos();
 
-if (themeBtn) {
-  themeBtn.addEventListener("click", alternarTema);
-}
 
 if (window.lucide) {
   lucide.createIcons();

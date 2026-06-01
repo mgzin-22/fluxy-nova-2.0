@@ -8,7 +8,7 @@ const THEME_KEY = "fluxy_theme";
 
 const token = localStorage.getItem(TOKEN_KEY);
 
-const themeBtn = document.getElementById("toggle-theme");
+
 const formVenda = document.getElementById("form-venda");
 const produtoVendaInput = document.getElementById("produto-venda");
 const categoriaVendaInput = document.getElementById("categoria-venda");
@@ -58,22 +58,8 @@ if (!token) {
 function aplicarTemaSalvo() {
   const savedTheme = localStorage.getItem(THEME_KEY) || "dark";
   document.body.classList.toggle("light", savedTheme === "light");
-
-  if (themeBtn) {
-    themeBtn.textContent = savedTheme === "light" ? "☀️" : "🌙";
-  }
 }
 
-function alternarTema() {
-  document.body.classList.toggle("light");
-  const isLight = document.body.classList.contains("light");
-
-  localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
-
-  if (themeBtn) {
-    themeBtn.textContent = isLight ? "☀️" : "🌙";
-  }
-}
 
 function formatMoney(value) {
   return Number(value || 0).toLocaleString("pt-BR", {
@@ -696,9 +682,7 @@ aplicarTemaSalvo();
 carregarProdutos();
 carregarVendas();
 
-if (themeBtn) {
-  themeBtn.addEventListener("click", alternarTema);
-}
+
 
 if (window.lucide) {
   lucide.createIcons();
