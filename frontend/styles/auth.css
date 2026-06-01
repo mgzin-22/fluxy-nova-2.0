@@ -335,4 +335,61 @@ label {
   background: #eaf4ff;
   color: #1e70b8;
 }
+
+@media (max-width: 860px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-brand {
+    padding: 34px;
+  }
+
+  .auth-card {
+    padding: 28px;
+  }
+
+  .auth-logo {
+    width: 200px;
+    margin-bottom: 20px;
+  }
+}
+
+.auth-extra-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 2px 0 4px;
+}
+
+.auth-extra-actions.center {
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.auth-extra-actions a {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.auth-extra-actions a:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.single-auth-card {
+  min-height: 100%;
+}
+
+.single-auth-card .form {
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.message.info {
+  background: #eaf4ff;
+  color: #1e70b8;
+}
 }

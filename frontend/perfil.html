@@ -87,7 +87,6 @@
       </aside>
 
       <section class="settings-content">
-        <!-- PERFIL -->
         <article id="tab-perfil" class="settings-panel active">
           <div class="panel-heading">
             <span class="panel-icon">
@@ -101,6 +100,38 @@
           </div>
 
           <form id="form-perfil" class="settings-form">
+            <section class="business-logo-card">
+              <div class="business-logo-preview" id="business-logo-preview">
+                <img id="business-logo-img" src="" alt="Logo do negócio" hidden />
+                <span id="business-logo-placeholder">
+                  <i data-lucide="image-plus"></i>
+                </span>
+              </div>
+
+              <div class="business-logo-info">
+                <h3>Logo ou foto do negócio</h3>
+                <p>
+                  Essa imagem pode ser usada no perfil, relatórios e exportações da Fluxy.
+                </p>
+
+                <div class="business-logo-actions">
+                  <label for="logo-negocio" class="upload-logo-btn">
+                    <i data-lucide="upload"></i>
+                    Escolher imagem
+                  </label>
+
+                  <input id="logo-negocio" type="file" accept="image/*" hidden />
+
+                  <button id="remover-logo-negocio" class="remove-logo-btn" type="button">
+                    <i data-lucide="trash-2"></i>
+                    Remover
+                  </button>
+                </div>
+
+                <small>Formatos recomendados: PNG, JPG ou WEBP.</small>
+              </div>
+            </section>
+
             <div class="form-grid">
               <div class="form-group">
                 <label for="nome-usuario">Nome do usuário</label>
@@ -140,7 +171,6 @@
           </form>
         </article>
 
-        <!-- PREFERÊNCIAS -->
         <article id="tab-preferencias" class="settings-panel">
           <div class="panel-heading">
             <span class="panel-icon">
@@ -204,7 +234,6 @@
           </button>
         </article>
 
-        <!-- TERMOS -->
         <article id="tab-termos" class="settings-panel">
           <div class="panel-heading">
             <span class="panel-icon">
@@ -349,7 +378,6 @@
           </div>
         </article>
 
-        <!-- PERMISSÕES -->
         <article id="tab-permissoes" class="settings-panel">
           <div class="panel-heading">
             <span class="panel-icon">
@@ -405,7 +433,6 @@
           </button>
         </article>
 
-        <!-- SEGURANÇA -->
         <article id="tab-seguranca" class="settings-panel">
           <div class="panel-heading">
             <span class="panel-icon danger">

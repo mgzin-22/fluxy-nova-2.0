@@ -1,3 +1,5 @@
+const API_BASE = "https://fluxy-api-r0lt.onrender.com";
+
 const TOKEN_KEY = "fluxy_token";
 const USER_KEY = "fluxy_user";
 const THEME_KEY = "fluxy_theme";
@@ -20,6 +22,11 @@ const tipoNegocioInput = document.getElementById("tipo-negocio");
 const metaMensalInput = document.getElementById("meta-mensal");
 const telefoneNegocioInput = document.getElementById("telefone-negocio");
 
+const logoNegocioInput = document.getElementById("logo-negocio");
+const removerLogoNegocioBtn = document.getElementById("remover-logo-negocio");
+const businessLogoImg = document.getElementById("business-logo-img");
+const businessLogoPlaceholder = document.getElementById("business-logo-placeholder");
+
 const themeDarkBtn = document.getElementById("theme-dark");
 const themeLightBtn = document.getElementById("theme-light");
 
@@ -35,6 +42,9 @@ const salvarPermissoesBtn = document.getElementById("salvar-permissoes");
 
 const securityEmail = document.getElementById("security-email");
 const logoutSettingsBtn = document.getElementById("logout-settings-btn");
+
+let selectedLogoBase64 = null;
+let removeBusinessLogo = false;
 
 if (!token) {
   window.location.href = "auth.html";
@@ -90,13 +100,47 @@ function aplicarTema(theme) {
   localStorage.setItem(THEME_KEY, theme);
 }
 
-function carregarDados() {
-  const user = getUser();
-  const savedTheme = localStorage.getItem(THEME_KEY) || "dark";
-  const notificationsEnabled = localStorage.getItem(NOTIFICATIONS_KEY);
-  const stockAlertsEnabled = localStorage.getItem(STOCK_ALERTS_KEY);
-  const terms = getTerms();
+function renderBusinessLogo(url) {
+  if (url) {
+    businessLogoImg.src = url;
+    businessLogoImg.hidden = false;
+    businessLogoPlaceholder.hidden = true;
+    return;
+  }
 
+  businessLogoImg.src = "";
+  businessLogoImg.hidden = true;
+  businessLogoPlaceholder.hidden = false;
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Não foi possível ler a imagem."));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function carregarUsuarioApi() {
+  const response = await fetch(`${API_BASE}/user/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Não foi possível carregar o perfil.");
+  }
+
+  saveUser(data);
+  return data;
+}
+
+function preencherPerfil(user) {
   nomeUsuarioInput.value = user.name || "";
   emailUsuarioInput.value = user.email || "";
   nomeNegocioInput.value = user.businessName || "";
@@ -105,6 +149,15 @@ function carregarDados() {
   telefoneNegocioInput.value = user.phone || "";
 
   securityEmail.textContent = user.email || "Email não identificado";
+
+  renderBusinessLogo(user.businessLogoUrl);
+}
+
+async function carregarDados() {
+  const savedTheme = localStorage.getItem(THEME_KEY) || "dark";
+  const notificationsEnabled = localStorage.getItem(NOTIFICATIONS_KEY);
+  const stockAlertsEnabled = localStorage.getItem(STOCK_ALERTS_KEY);
+  const terms = getTerms();
 
   notificacoesVisuaisInput.checked =
     notificationsEnabled === null ? true : notificationsEnabled === "true";
@@ -118,6 +171,21 @@ function carregarDados() {
   permissaoNotificacoesInput.checked = terms.allowSmartNotifications;
 
   aplicarTema(savedTheme);
+
+  try {
+    const user = await carregarUsuarioApi();
+    preencherPerfil(user);
+  } catch (error) {
+    const user = getUser();
+    preencherPerfil(user);
+
+    notifyToast(
+      "warning",
+      "wifi-off",
+      "Perfil local carregado",
+      "Não foi possível buscar os dados atualizados no servidor."
+    );
+  }
 }
 
 function trocarAba(tabName) {
@@ -140,28 +208,127 @@ tabs.forEach((tab) => {
   });
 });
 
-formPerfil.addEventListener("submit", (event) => {
+logoNegocioInput.addEventListener("change", async () => {
+  const file = logoNegocioInput.files[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    notifyToast(
+      "warning",
+      "image-off",
+      "Arquivo inválido",
+      "Escolha uma imagem nos formatos PNG, JPG ou WEBP."
+    );
+    logoNegocioInput.value = "";
+    return;
+  }
+
+  const maxSizeMB = 3;
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+  if (file.size > maxSizeBytes) {
+    notifyToast(
+      "warning",
+      "file-warning",
+      "Imagem muito grande",
+      `Escolha uma imagem com até ${maxSizeMB}MB.`
+    );
+    logoNegocioInput.value = "";
+    return;
+  }
+
+  try {
+    selectedLogoBase64 = await fileToBase64(file);
+    removeBusinessLogo = false;
+    renderBusinessLogo(selectedLogoBase64);
+
+    notifyToast(
+      "success",
+      "image",
+      "Logo selecionada",
+      "Agora salve o perfil para confirmar a alteração."
+    );
+  } catch (error) {
+    notifyToast(
+      "danger",
+      "circle-alert",
+      "Erro na imagem",
+      error.message
+    );
+  }
+});
+
+removerLogoNegocioBtn.addEventListener("click", () => {
+  selectedLogoBase64 = null;
+  removeBusinessLogo = true;
+  logoNegocioInput.value = "";
+
+  renderBusinessLogo(null);
+
+  notifyToast(
+    "info",
+    "trash-2",
+    "Logo removida",
+    "Salve o perfil para confirmar a remoção."
+  );
+});
+
+formPerfil.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const user = getUser();
-
-  const updatedUser = {
-    ...user,
+  const payload = {
     name: nomeUsuarioInput.value.trim(),
     businessName: nomeNegocioInput.value.trim(),
     businessType: tipoNegocioInput.value.trim(),
     monthlyGoal: metaMensalInput.value ? Number(metaMensalInput.value) : null,
-    phone: telefoneNegocioInput.value.trim()
+    phone: telefoneNegocioInput.value.trim(),
+    businessLogoBase64: selectedLogoBase64,
+    removeBusinessLogo
   };
 
-  saveUser(updatedUser);
+  try {
+    const response = await fetch(`${API_BASE}/user/me`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
 
-  notifyToast(
-    "success",
-    "check",
-    "Perfil salvo",
-    "As informações do negócio foram atualizadas."
-  );
+    const data = await response.json();
+
+    if (!response.ok) {
+      notifyToast(
+        "danger",
+        "circle-alert",
+        "Erro ao salvar perfil",
+        data.error || "Não foi possível atualizar as informações."
+      );
+      return;
+    }
+
+    selectedLogoBase64 = null;
+    removeBusinessLogo = false;
+
+    saveUser(data);
+    preencherPerfil(data);
+
+    notifyToast(
+      "success",
+      "check",
+      "Perfil salvo",
+      "As informações do negócio foram atualizadas."
+    );
+  } catch (error) {
+    notifyToast(
+      "danger",
+      "wifi-off",
+      "Erro de conexão",
+      "Não foi possível conectar com o servidor."
+    );
+  }
 });
 
 themeDarkBtn.addEventListener("click", () => {

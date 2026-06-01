@@ -51,16 +51,27 @@ if (isDashboardPage && !getToken()) {
 
 function showMessage(text, type = "success") {
   if (!messageBox) return;
+
   messageBox.hidden = false;
   messageBox.className = `message ${type}`;
   messageBox.textContent = text;
 }
 
+function showHtmlMessage(html, type = "success") {
+  if (!messageBox) return;
+
+  messageBox.hidden = false;
+  messageBox.className = `message ${type}`;
+  messageBox.innerHTML = html;
+}
+
 function clearMessage() {
   if (!messageBox) return;
+
   messageBox.hidden = true;
   messageBox.className = "message";
   messageBox.textContent = "";
+  messageBox.innerHTML = "";
 }
 
 function setActiveTab(mode) {
@@ -124,7 +135,9 @@ if (isAuthPage) {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           name: data.name,
           email: data.email,
@@ -161,7 +174,9 @@ if (isAuthPage) {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify(data)
       });
 
@@ -202,11 +217,13 @@ if (isForgotPage) {
     }
 
     try {
-      showMessage("Enviando link de recuperação...", "info");
+      showMessage("Gerando link de recuperação...", "info");
 
       const response = await fetch(`${API_URL}/auth/forgot-password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           email: data.email
         })
@@ -215,14 +232,27 @@ if (isForgotPage) {
       const result = await response.json();
 
       if (!response.ok) {
-        showMessage(result.error || "Não foi possível enviar o e-mail.", "error");
+        showMessage(result.error || "Não foi possível gerar o link.", "error");
         return;
       }
 
-      showMessage(
-        result.message || "Se o e-mail estiver cadastrado, enviaremos as instruções de recuperação.",
-        "success"
-      );
+      if (result.resetLink) {
+        showHtmlMessage(
+  `
+    <strong>${result.message}</strong>
+    <br><br>
+    <a href="${result.resetLink}" style="color:#1e70b8; font-weight:800; word-break:break-all;">
+      Abrir link de redefinição
+    </a>
+  `,
+  "success"
+);
+      } else {
+        showMessage(
+          result.message || "Link de recuperação gerado.",
+          "success"
+        );
+      }
 
       forgotForm.reset();
     } catch {
@@ -262,7 +292,9 @@ if (isResetPage) {
 
       const response = await fetch(`${API_URL}/auth/reset-password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           userId,
           token,
@@ -319,7 +351,9 @@ function initHomeEffects() {
         }
       });
     },
-    { threshold: 0.2 }
+    {
+      threshold: 0.2
+    }
   );
 
   revealItems.forEach((item) => observer.observe(item));
