@@ -20,6 +20,7 @@ async function uploadBusinessLogo(imageBase64) {
   return uploadResult.secure_url;
 }
 
+// BUSCAR PERFIL DO USUÁRIO LOGADO
 router.get("/me", async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
@@ -48,11 +49,13 @@ router.get("/me", async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({
-      error: error.message
+      error: "Erro ao carregar perfil.",
+      details: error.message
     });
   }
 });
 
+// ATUALIZAR PERFIL DO USUÁRIO LOGADO
 router.put("/me", async (req, res) => {
   try {
     const {
@@ -115,11 +118,13 @@ router.put("/me", async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({
-      error: error.message
+      error: "Erro ao atualizar perfil.",
+      details: error.message
     });
   }
 });
 
+// ALTERAR SENHA
 router.put("/password", async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -172,7 +177,8 @@ router.put("/password", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: error.message
+      error: "Erro ao atualizar senha.",
+      details: error.message
     });
   }
 });
