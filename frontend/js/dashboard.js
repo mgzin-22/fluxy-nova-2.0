@@ -224,9 +224,19 @@ async function carregarDados() {
 function filtrarVendas(vendas, filtro) {
   const hoje = new Date();
 
-  const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-  const inicioSemana = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 7);
-  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const inicioHoje = new Date(
+    hoje.getFullYear(),
+    hoje.getMonth(),
+    hoje.getDate()
+  );
+
+  const inicioSemana = new Date(hoje);
+  inicioSemana.setDate(hoje.getDate() - 7);
+  inicioSemana.setHours(0, 0, 0, 0);
+
+  const inicioMes = new Date(hoje);
+  inicioMes.setDate(hoje.getDate() - 30);
+  inicioMes.setHours(0, 0, 0, 0);
 
   return vendas.filter((venda) => {
     const dataVenda = new Date(venda.createdAt);
@@ -294,7 +304,7 @@ function renderizarCards(vendas) {
   const labels = {
     today: "Hoje",
     week: "Últimos 7 dias",
-    month: "Mês atual",
+    month: "Últimos 30 dias",
     all: "Todo o histórico",
     custom: "Período personalizado"
   };
