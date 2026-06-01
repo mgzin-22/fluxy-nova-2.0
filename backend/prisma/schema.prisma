@@ -21,8 +21,9 @@ model User {
   resetTokenExpires DateTime?
   createdAt         DateTime @default(now())
 
-  vendas   Venda[]
-  products Product[]
+  vendas        Venda[]
+  products      Product[]
+  notifications Notification[]
 }
 
 model Venda {
@@ -56,4 +57,24 @@ model Product {
   createdAt DateTime @default(now())
 
   vendas Venda[]
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  title      String
+  message    String
+  type       String   @default("info")
+  icon       String   @default("bell")
+  kind       String?
+  sourceId   String?
+  sourceType String?
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, kind])
+  @@index([userId, createdAt])
 }

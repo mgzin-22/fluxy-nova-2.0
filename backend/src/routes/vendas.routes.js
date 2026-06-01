@@ -23,6 +23,82 @@ function normalizePayment(value) {
   return payment;
 }
 
+function formatMoney(value) {
+  return Number(value || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+}
+
+async function createStockNotificationIfNeeded(tx, product, userId) {
+  const stock = Number(product.stock || 0);
+  const minStock = Number(product.minStock || 0);
+
+  const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  if (stock <= 0) {
+    const exists = await tx.notification.findFirst({
+      where: {
+        userId,
+        kind: "STOCK_OUT",
+        sourceId: product.id,
+        sourceType: "Product",
+        read: false,
+        createdAt: {
+          gte: last24h
+        }
+      }
+    });
+
+    if (!exists) {
+      await tx.notification.create({
+        data: {
+          userId,
+          title: "Produto sem estoque",
+          message: `${product.name} chegou a 0 unidades. Reponha para continuar vendendo.`,
+          type: "danger",
+          icon: "package-x",
+          kind: "STOCK_OUT",
+          sourceId: product.id,
+          sourceType: "Product"
+        }
+      });
+    }
+
+    return;
+  }
+
+  if (minStock > 0 && stock <= minStock) {
+    const exists = await tx.notification.findFirst({
+      where: {
+        userId,
+        kind: "STOCK_LOW",
+        sourceId: product.id,
+        sourceType: "Product",
+        read: false,
+        createdAt: {
+          gte: last24h
+        }
+      }
+    });
+
+    if (!exists) {
+      await tx.notification.create({
+        data: {
+          userId,
+          title: "Estoque baixo",
+          message: `${product.name} está com ${stock} unidade(s). Estoque mínimo: ${minStock}.`,
+          type: "warning",
+          icon: "triangle-alert",
+          kind: "STOCK_LOW",
+          sourceId: product.id,
+          sourceType: "Product"
+        }
+      });
+    }
+  }
+}
+
 // CRIAR VENDA INTEGRADA AO ESTOQUE
 router.post("/", async (req, res) => {
   try {
@@ -105,6 +181,21 @@ router.post("/", async (req, res) => {
           product: true
         }
       });
+
+      await tx.notification.create({
+        data: {
+          userId: req.userId,
+          title: "Venda registrada",
+          message: `${qtd} unidade(s) de ${product.name} vendida(s), totalizando ${formatMoney(valorTotal)}.`,
+          type: "success",
+          icon: "shopping-cart",
+          kind: "SALE_CREATED",
+          sourceId: novaVenda.id,
+          sourceType: "Venda"
+        }
+      });
+
+      await createStockNotificationIfNeeded(tx, updatedProduct, req.userId);
 
       return novaVenda;
     });

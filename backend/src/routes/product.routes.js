@@ -169,6 +169,52 @@ router.put("/:id", async (req, res) => {
       imageUrl = await uploadProductImage(imageBase64);
     }
 
+    async function createProductStockNotification(product, userId) {
+  const stock = Number(product.stock || 0);
+  const minStock = Number(product.minStock || 0);
+
+  if (stock > 0 && (!minStock || stock > minStock)) return;
+
+  const kind = stock <= 0 ? "STOCK_OUT" : "STOCK_LOW";
+  const type = stock <= 0 ? "danger" : "warning";
+  const icon = stock <= 0 ? "package-x" : "triangle-alert";
+  const title = stock <= 0 ? "Produto sem estoque" : "Estoque baixo";
+  const message =
+    stock <= 0
+      ? `${product.name} está sem estoque.`
+      : `${product.name} está com ${stock} unidade(s). Estoque mínimo: ${minStock}.`;
+
+  const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const exists = await prisma.notification.findFirst({
+    where: {
+      userId,
+      kind,
+      sourceId: product.id,
+      sourceType: "Product",
+      read: false,
+      createdAt: {
+        gte: last24h
+      }
+    }
+  });
+
+  if (exists) return;
+
+  await prisma.notification.create({
+    data: {
+      userId,
+      title,
+      message,
+      type,
+      icon,
+      kind,
+      sourceId: product.id,
+      sourceType: "Product"
+    }
+  });
+}
+
     const product = await prisma.product.update({
       where: {
         id: req.params.id

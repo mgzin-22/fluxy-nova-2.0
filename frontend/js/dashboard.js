@@ -1,4 +1,6 @@
 const API_URL = "https://fluxy-api-r0lt.onrender.com";
+const NOTIFICATIONS_API = `${API_URL}/notifications`;
+
 const TOKEN_KEY = "fluxy_token";
 const USER_KEY = "fluxy_user";
 const THEME_KEY = "fluxy_theme";
@@ -49,7 +51,6 @@ let produtosGlobais = [];
 let filtroAtual = "month";
 let dataInicialCustom = null;
 let dataFinalCustom = null;
-let toastInicialMostrado = false;
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -74,6 +75,15 @@ function formatMoney(value) {
 }
 
 function formatDate(date) {
+  return new Date(date).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function formatNotificationDate(date) {
   return new Date(date).toLocaleString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
@@ -275,7 +285,7 @@ function aplicarFiltro() {
   renderizarProdutosEstoqueBaixo();
   renderizarVendasRecentes();
   renderizarInsight(vendasFiltradas);
-  gerarNotificacoes(vendasFiltradas);
+  carregarNotificacoes();
 }
 
 function renderizarCards(vendas) {
@@ -299,7 +309,6 @@ function renderizarCards(vendas) {
   itensVendidosEl.textContent = itensVendidos;
   estoqueBaixoEl.textContent = produtosBaixo.length;
   estoqueBaixoLabelEl.textContent = produtosBaixo.length === 1 ? "Produto em atenção" : "Produtos em atenção";
-  alertCountEl.textContent = produtosBaixo.length;
 
   const labels = {
     today: "Hoje",
@@ -695,84 +704,73 @@ function criarNotificacao({ type = "info", icon = "bell", title, message }) {
   return item;
 }
 
-function gerarNotificacoes(vendasFiltradas) {
-  const notificacoes = [];
-
-  const produtosSemEstoque = produtosGlobais.filter((produto) => Number(produto.stock) <= 0);
-
-  const produtosEstoqueBaixo = produtosGlobais.filter((produto) => {
-    const minStock = Number(produto.minStock || 0);
-    return minStock > 0 && Number(produto.stock) > 0 && Number(produto.stock) <= minStock;
-  });
-
-  produtosSemEstoque.slice(0, 3).forEach((produto) => {
-    notificacoes.push({
-      type: "danger",
-      icon: "package-x",
-      title: "Produto sem estoque",
-      message: `${produto.name} chegou a 0 unidades. Reponha para continuar vendendo.`
+async function sincronizarNotificacoesSistema() {
+  try {
+    await fetch(`${NOTIFICATIONS_API}/sync`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${getToken()}`
+      }
     });
-  });
-
-  produtosEstoqueBaixo.slice(0, 3).forEach((produto) => {
-    notificacoes.push({
-      type: "warning",
-      icon: "triangle-alert",
-      title: "Estoque baixo",
-      message: `${produto.name} está com ${produto.stock} unidades. Estoque mínimo: ${produto.minStock}.`
-    });
-  });
-
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-
-  const vendasHoje = vendasGlobais.filter((venda) => new Date(venda.createdAt) >= hoje);
-
-  if (vendasHoje.length > 0) {
-    const totalHoje = vendasHoje.reduce((total, venda) => total + Number(venda.valor || 0), 0);
-
-    notificacoes.push({
-      type: "success",
-      icon: "trending-up",
-      title: "Movimento de hoje",
-      message: `Hoje você já registrou ${vendasHoje.length} venda(s), somando ${formatMoney(totalHoje)}.`
-    });
+  } catch (error) {
+    console.warn("Não foi possível sincronizar notificações.", error);
   }
-
-  const ranking = {};
-
-  vendasFiltradas.forEach((venda) => {
-    ranking[venda.produto] = (ranking[venda.produto] || 0) + Number(venda.quantidade || 1);
-  });
-
-  const produtoCampeao = Object.entries(ranking).sort((a, b) => b[1] - a[1])[0];
-
-  if (produtoCampeao) {
-    notificacoes.push({
-      type: "info",
-      icon: "sparkles",
-      title: "Produto em destaque",
-      message: `${produtoCampeao[0]} é o produto mais vendido do período, com ${produtoCampeao[1]} unidade(s).`
-    });
-  }
-
-  if (!toastInicialMostrado && notificacoes.length > 0) {
-    const alertaPrincipal = notificacoes[0];
-
-    showToast({
-      type: alertaPrincipal.type,
-      icon: alertaPrincipal.icon,
-      title: alertaPrincipal.title,
-      message: alertaPrincipal.message
-    });
-
-    toastInicialMostrado = true;
-  }
-
-  renderizarNotificacoes(notificacoes);
 }
 
-function renderizarNotificacoes(notificacoes) {
+async function carregarNotificacoes() {
+  try {
+    const response = await fetch(NOTIFICATIONS_API, {
+      headers: {
+        Authorization: `Bearer ${getToken()}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.warn("Erro ao carregar notificações:", data);
+      renderizarNotificacoes([], 0);
+      return;
+    }
+
+    renderizarNotificacoes(data.notifications || [], data.unreadCount || 0);
+  } catch (error) {
+    console.warn("Não foi possível carregar notificações.", error);
+    renderizarNotificacoes([], 0);
+  }
+}
+
+async function marcarNotificacaoComoLida(id) {
+  try {
+    await fetch(`${NOTIFICATIONS_API}/${id}/read`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${getToken()}`
+      }
+    });
+
+    carregarNotificacoes();
+  } catch (error) {
+    console.warn("Não foi possível marcar notificação como lida.", error);
+  }
+}
+
+async function marcarTodasNotificacoesComoLidas() {
+  try {
+    await fetch(`${NOTIFICATIONS_API}/read-all`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${getToken()}`
+      }
+    });
+
+    carregarNotificacoes();
+  } catch (error) {
+    console.warn("Não foi possível marcar todas como lidas.", error);
+  }
+}
+
+function renderizarNotificacoes(notificacoes, unreadCount = 0) {
   notificationList.innerHTML = "";
 
   if (!notificacoes.length) {
@@ -787,14 +785,27 @@ function renderizarNotificacoes(notificacoes) {
   }
 
   notificacoes.forEach((notificacao) => {
-    notificationList.appendChild(criarNotificacao(notificacao));
+    const item = criarNotificacao({
+      type: notificacao.type || "info",
+      icon: notificacao.icon || "bell",
+      title: notificacao.title || "Notificação",
+      message: `${notificacao.message || ""} • ${formatNotificationDate(notificacao.createdAt)}`
+    });
+
+    if (!notificacao.read) {
+      item.classList.add("unread");
+    }
+
+    item.addEventListener("click", () => {
+      if (!notificacao.read) {
+        marcarNotificacaoComoLida(notificacao.id);
+      }
+    });
+
+    notificationList.appendChild(item);
   });
 
-  const alertasImportantes = notificacoes.filter((item) => {
-    return item.type === "danger" || item.type === "warning";
-  });
-
-  alertCountEl.textContent = alertasImportantes.length || notificacoes.length;
+  alertCountEl.textContent = unreadCount;
 
   if (window.lucide) {
     lucide.createIcons();
@@ -803,6 +814,10 @@ function renderizarNotificacoes(notificacoes) {
 
 function abrirNotificacoes() {
   notificationDropdown.hidden = !notificationDropdown.hidden;
+
+  if (!notificationDropdown.hidden) {
+    marcarTodasNotificacoesComoLidas();
+  }
 
   if (window.lucide) {
     lucide.createIcons();
@@ -898,6 +913,7 @@ aplicarTemaSalvo();
 preencherUsuario();
 carregarPerfilUsuario();
 configurarFiltros();
+sincronizarNotificacoesSistema();
 carregarDados();
 
 if (notificationBtn) {
@@ -922,4 +938,4 @@ document.addEventListener("click", (event) => {
 
 if (window.lucide) {
   lucide.createIcons();
-} 
+}
