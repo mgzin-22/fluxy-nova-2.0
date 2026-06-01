@@ -7,6 +7,27 @@ const USER_KEY = "fluxy_user";
 const THEME_KEY = "fluxy_theme";
 const TERMS_KEY = "fluxy_terms_permissions";
 
+const LOGO_PATHS = [
+  "assets/logo branca.png",
+  "assets/logo-fluxy.png",
+  "assets/logo-branca.png",
+  "assets/icone.png"
+];
+
+const FLUXY_COLORS = {
+  dark: "0B1220",
+  dark2: "111827",
+  blue: "3498DB",
+  aqua: "1ABC9C",
+  green: "22C55E",
+  orange: "F59E0B",
+  white: "FFFFFF",
+  text: "0F172A",
+  muted: "64748B",
+  lightBg: "F3F7FF",
+  border: "D9E2F2"
+};
+
 const token = localStorage.getItem(TOKEN_KEY);
 
 const filtersPanel = document.getElementById("filters-panel");
@@ -101,6 +122,10 @@ function formatMoney(value) {
   });
 }
 
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString("pt-BR");
+}
+
 function formatDate(date) {
   return new Date(date).toLocaleString("pt-BR", {
     day: "2-digit",
@@ -146,6 +171,73 @@ function getPeriodLabel() {
   }
 
   return labels[periodoAtual] || "Filtro atual";
+}
+
+async function fetchArrayBufferIfExists(path) {
+  try {
+    const response = await fetch(path);
+
+    if (!response.ok) return null;
+
+    return response.arrayBuffer();
+  } catch (error) {
+    return null;
+  }
+}
+
+async function getLogoForExcel() {
+  for (const path of LOGO_PATHS) {
+    const buffer = await fetchArrayBufferIfExists(path);
+
+    if (buffer) {
+      const extension =
+        path.toLowerCase().endsWith(".jpg") || path.toLowerCase().endsWith(".jpeg")
+          ? "jpeg"
+          : "png";
+
+      return {
+        buffer,
+        extension
+      };
+    }
+  }
+
+  return null;
+}
+
+function carregarImagemBase64(path) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+
+        resolve(canvas.toDataURL("image/png"));
+      } catch (error) {
+        resolve(null);
+      }
+    };
+
+    img.onerror = () => resolve(null);
+    img.src = path;
+  });
+}
+
+async function getLogoForPdf() {
+  for (const path of LOGO_PATHS) {
+    const base64 = await carregarImagemBase64(path);
+
+    if (base64) return base64;
+  }
+
+  return null;
 }
 
 async function carregarDados() {
@@ -833,7 +925,6 @@ function analisarEstoque() {
 function analisarOportunidade() {
   const vendas = obterVendasTratadas();
   const resumo = getResumo(vendas);
-  const produtosBaixo = getProdutosBaixoEstoque();
 
   if (!vendas.length) {
     return `
@@ -851,7 +942,10 @@ function analisarOportunidade() {
   const categoriaTop = resumo.categorias[0];
 
   const produtoTopNoEstoque = produtosGlobais.find((produto) => produto.name === produtoTop?.nome);
-  const produtoTopBaixo = produtoTopNoEstoque && produtoTopNoEstoque.minStock && Number(produtoTopNoEstoque.stock) <= Number(produtoTopNoEstoque.minStock);
+  const produtoTopBaixo =
+    produtoTopNoEstoque &&
+    produtoTopNoEstoque.minStock &&
+    Number(produtoTopNoEstoque.stock) <= Number(produtoTopNoEstoque.minStock);
 
   if (produtoTopBaixo) {
     return `
@@ -928,9 +1022,7 @@ function responderFluxter(pergunta) {
       forma de pagamento, estoque baixo e oportunidades de venda.
     </p>
 
-    <p>
-      Pelo filtro atual, o resumo geral é: ${gerarResumoGeral()}
-    </p>
+    ${gerarResumoGeral()}
   `;
 }
 
@@ -971,7 +1063,7 @@ function getExportRows() {
   return obterVendasTratadas().map((venda) => ({
     Produto: venda.produto || "-",
     Categoria: venda.categoria || "Sem categoria",
-    Quantidade: venda.quantidade || 1,
+    Quantidade: Number(venda.quantidade || 1),
     Pagamento: normalizePayment(venda.pagamento),
     "Valor total": Number(venda.valor || 0),
     Data: formatDate(venda.createdAt),
@@ -983,29 +1075,147 @@ function getFileDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function getResumoRows(resumo) {
-  const user = getUser();
-
-  return [
-    ["Relatório Fluxy", ""],
-    ["Negócio", user.businessName || "Fluxy"],
-    ["Data de geração", formatDate(new Date())],
-    ["Período", getPeriodLabel()],
-    ["Categoria", filtroCategoriaInput.value],
-    ["Pagamento", filtroPagamentoInput.value],
-    ["Busca", buscarInput.value || "Não aplicada"],
-    ["", ""],
-    ["Total vendido", resumo.total],
-    ["Quantidade de vendas", resumo.quantidade],
-    ["Itens vendidos", resumo.itens],
-    ["Ticket médio", resumo.ticket],
-    ["Produto destaque", resumo.produtos[0]?.nome || "-"],
-    ["Pagamento destaque", resumo.pagamentos[0]?.nome || "-"],
-    ["Categoria destaque", resumo.categorias[0]?.nome || "-"]
-  ];
+function styleCell(cell, options = {}) {
+  if (options.font) cell.font = options.font;
+  if (options.fill) cell.fill = options.fill;
+  if (options.alignment) cell.alignment = options.alignment;
+  if (options.border) cell.border = options.border;
+  if (options.numFmt) cell.numFmt = options.numFmt;
 }
 
-function exportarExcel() {
+function applyHeaderStyle(row, color = FLUXY_COLORS.blue) {
+  row.eachCell((cell) => {
+    styleCell(cell, {
+      font: {
+        bold: true,
+        color: { argb: FLUXY_COLORS.white }
+      },
+      fill: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: color }
+      },
+      alignment: {
+        vertical: "middle",
+        horizontal: "center"
+      },
+      border: {
+        top: { style: "thin", color: { argb: FLUXY_COLORS.border } },
+        left: { style: "thin", color: { argb: FLUXY_COLORS.border } },
+        bottom: { style: "thin", color: { argb: FLUXY_COLORS.border } },
+        right: { style: "thin", color: { argb: FLUXY_COLORS.border } }
+      }
+    });
+  });
+}
+
+function applyTableBorders(worksheet, startRow, endRow, startCol, endCol) {
+  for (let rowNumber = startRow; rowNumber <= endRow; rowNumber++) {
+    const row = worksheet.getRow(rowNumber);
+
+    for (let colNumber = startCol; colNumber <= endCol; colNumber++) {
+      const cell = row.getCell(colNumber);
+
+      cell.border = {
+        top: { style: "thin", color: { argb: FLUXY_COLORS.border } },
+        left: { style: "thin", color: { argb: FLUXY_COLORS.border } },
+        bottom: { style: "thin", color: { argb: FLUXY_COLORS.border } },
+        right: { style: "thin", color: { argb: FLUXY_COLORS.border } }
+      };
+
+      cell.alignment = {
+        vertical: "middle"
+      };
+    }
+  }
+}
+
+function addWorksheetTitle(worksheet, title, subtitle) {
+  worksheet.mergeCells("A1:G1");
+  worksheet.mergeCells("A2:G2");
+
+  const titleCell = worksheet.getCell("A1");
+  const subtitleCell = worksheet.getCell("A2");
+
+  titleCell.value = title;
+  subtitleCell.value = subtitle;
+
+  titleCell.font = {
+    size: 18,
+    bold: true,
+    color: { argb: FLUXY_COLORS.white }
+  };
+
+  subtitleCell.font = {
+    size: 11,
+    color: { argb: "CDE8FF" }
+  };
+
+  titleCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: FLUXY_COLORS.dark }
+  };
+
+  subtitleCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: FLUXY_COLORS.dark }
+  };
+
+  titleCell.alignment = { vertical: "middle", horizontal: "left" };
+  subtitleCell.alignment = { vertical: "middle", horizontal: "left" };
+
+  worksheet.getRow(1).height = 28;
+  worksheet.getRow(2).height = 22;
+}
+
+function addLogoToWorksheet(workbook, worksheet, logoData) {
+  if (!logoData) return;
+
+  const imageId = workbook.addImage({
+    buffer: logoData.buffer,
+    extension: logoData.extension
+  });
+
+  worksheet.addImage(imageId, {
+    tl: { col: 5.35, row: 0.25 },
+    ext: { width: 145, height: 34 }
+  });
+}
+
+function addSummaryCard(worksheet, cellRef, label, value, color) {
+  const cell = worksheet.getCell(cellRef);
+  const row = Number(cellRef.replace(/[A-Z]/g, ""));
+  const col = cell.col;
+
+  worksheet.mergeCells(row, col, row + 1, col + 1);
+
+  cell.value = `${label}\n${value}`;
+  cell.font = {
+    bold: true,
+    size: 11,
+    color: { argb: FLUXY_COLORS.white }
+  };
+  cell.alignment = {
+    vertical: "middle",
+    horizontal: "center",
+    wrapText: true
+  };
+  cell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: color }
+  };
+  cell.border = {
+    top: { style: "thin", color: { argb: color } },
+    left: { style: "thin", color: { argb: color } },
+    bottom: { style: "thin", color: { argb: color } },
+    right: { style: "thin", color: { argb: color } }
+  };
+}
+
+async function exportarExcel() {
   const rows = getExportRows();
   const resumo = getResumo(obterVendasTratadas());
 
@@ -1019,56 +1229,266 @@ function exportarExcel() {
     return;
   }
 
-  const workbook = XLSX.utils.book_new();
+  if (!window.ExcelJS || !window.saveAs) {
+    notifyToast(
+      "danger",
+      "file-warning",
+      "Erro ao gerar Excel",
+      "Bibliotecas de exportação não foram carregadas."
+    );
+    return;
+  }
 
-  const resumoSheet = XLSX.utils.aoa_to_sheet(getResumoRows(resumo));
-  resumoSheet["!cols"] = [{ wch: 28 }, { wch: 36 }];
+  try {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "Fluxy";
+    workbook.created = new Date();
 
-  const vendasSheet = XLSX.utils.json_to_sheet(rows);
-  vendasSheet["!cols"] = [
-    { wch: 28 },
-    { wch: 20 },
-    { wch: 12 },
-    { wch: 18 },
-    { wch: 16 },
-    { wch: 22 },
-    { wch: 16 }
-  ];
+    const logoData = await getLogoForExcel();
 
-  const categoriasRows = resumo.categorias.map((item) => ({
-    Categoria: item.nome,
-    Quantidade: item.quantidade,
-    Faturamento: item.valor
-  }));
+    const resumoSheet = workbook.addWorksheet("Resumo Fluxy", {
+      views: [{ showGridLines: false }]
+    });
 
-  const pagamentosRows = resumo.pagamentos.map((item) => ({
-    Pagamento: item.nome,
-    Quantidade: item.quantidade,
-    Faturamento: item.valor
-  }));
+    const vendasSheet = workbook.addWorksheet("Vendas", {
+      views: [{ showGridLines: false }]
+    });
 
-  const categoriasSheet = XLSX.utils.json_to_sheet(categoriasRows);
-  const pagamentosSheet = XLSX.utils.json_to_sheet(pagamentosRows);
+    const categoriasSheet = workbook.addWorksheet("Categorias", {
+      views: [{ showGridLines: false }]
+    });
 
-  categoriasSheet["!cols"] = [{ wch: 26 }, { wch: 14 }, { wch: 18 }];
-  pagamentosSheet["!cols"] = [{ wch: 24 }, { wch: 14 }, { wch: 18 }];
+    const pagamentosSheet = workbook.addWorksheet("Pagamentos", {
+      views: [{ showGridLines: false }]
+    });
 
-  XLSX.utils.book_append_sheet(workbook, resumoSheet, "Resumo Fluxy");
-  XLSX.utils.book_append_sheet(workbook, vendasSheet, "Vendas");
-  XLSX.utils.book_append_sheet(workbook, categoriasSheet, "Categorias");
-  XLSX.utils.book_append_sheet(workbook, pagamentosSheet, "Pagamentos");
+    addWorksheetTitle(resumoSheet, "Relatório Fluxy", "O fluxo certo para o seu negócio");
+    addLogoToWorksheet(workbook, resumoSheet, logoData);
 
-  XLSX.writeFile(workbook, `relatorio-fluxy-${getFileDate()}.xlsx`);
+    resumoSheet.columns = [
+      { width: 24 },
+      { width: 28 },
+      { width: 18 },
+      { width: 18 },
+      { width: 18 },
+      { width: 18 },
+      { width: 18 }
+    ];
 
-  notifyToast(
-    "success",
-    "file-spreadsheet",
-    "Excel Fluxy gerado",
-    "O relatório foi exportado com abas organizadas."
-  );
+    resumoSheet.getCell("A4").value = "Negócio";
+    resumoSheet.getCell("B4").value = getUser().businessName || "Fluxy";
+
+    resumoSheet.getCell("A5").value = "Data de geração";
+    resumoSheet.getCell("B5").value = formatDate(new Date());
+
+    resumoSheet.getCell("A6").value = "Período";
+    resumoSheet.getCell("B6").value = getPeriodLabel();
+
+    resumoSheet.getCell("A7").value = "Categoria";
+    resumoSheet.getCell("B7").value = filtroCategoriaInput.value;
+
+    resumoSheet.getCell("A8").value = "Pagamento";
+    resumoSheet.getCell("B8").value = filtroPagamentoInput.value;
+
+    resumoSheet.getCell("A9").value = "Busca";
+    resumoSheet.getCell("B9").value = buscarInput.value || "Não aplicada";
+
+    for (let row = 4; row <= 9; row++) {
+      resumoSheet.getCell(`A${row}`).font = { bold: true, color: { argb: FLUXY_COLORS.text } };
+      resumoSheet.getCell(`B${row}`).font = { color: { argb: FLUXY_COLORS.text } };
+
+      resumoSheet.getCell(`A${row}`).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "EAF4FF" }
+      };
+
+      resumoSheet.getCell(`B${row}`).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "F8FBFF" }
+      };
+    }
+
+    addSummaryCard(resumoSheet, "A12", "Faturamento", formatMoney(resumo.total), FLUXY_COLORS.blue);
+    addSummaryCard(resumoSheet, "C12", "Vendas", String(resumo.quantidade), FLUXY_COLORS.aqua);
+    addSummaryCard(resumoSheet, "E12", "Itens vendidos", String(resumo.itens), FLUXY_COLORS.green);
+    addSummaryCard(resumoSheet, "G12", "Ticket médio", formatMoney(resumo.ticket), FLUXY_COLORS.orange);
+
+    resumoSheet.getCell("A16").value = "Insights principais";
+    resumoSheet.getCell("A16").font = {
+      size: 14,
+      bold: true,
+      color: { argb: FLUXY_COLORS.text }
+    };
+
+    const insights = [
+      ["Produto destaque", resumo.produtos[0]?.nome || "-"],
+      ["Pagamento destaque", resumo.pagamentos[0]?.nome || "-"],
+      ["Categoria destaque", resumo.categorias[0]?.nome || "-"],
+      ["Recomendação Fluxter", "Acompanhe os produtos líderes e mantenha estoque disponível para evitar perda de vendas."]
+    ];
+
+    insights.forEach((item, index) => {
+      const row = 18 + index;
+
+      resumoSheet.getCell(`A${row}`).value = item[0];
+      resumoSheet.getCell(`B${row}`).value = item[1];
+      resumoSheet.mergeCells(`B${row}:G${row}`);
+
+      resumoSheet.getCell(`A${row}`).font = { bold: true };
+
+      resumoSheet.getCell(`A${row}`).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "EAF4FF" }
+      };
+
+      resumoSheet.getCell(`B${row}`).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "F8FBFF" }
+      };
+    });
+
+    applyTableBorders(resumoSheet, 4, 9, 1, 2);
+    applyTableBorders(resumoSheet, 18, 21, 1, 7);
+
+    addWorksheetTitle(vendasSheet, "Vendas", "Registros filtrados do relatório");
+    addLogoToWorksheet(workbook, vendasSheet, logoData);
+
+    vendasSheet.columns = [
+      { key: "Produto", width: 30 },
+      { key: "Categoria", width: 20 },
+      { key: "Quantidade", width: 14 },
+      { key: "Pagamento", width: 18 },
+      { key: "Valor total", width: 18 },
+      { key: "Data", width: 24 },
+      { key: "Status", width: 16 }
+    ];
+
+    vendasSheet.addRow([]);
+    vendasSheet.addRow(["Produto", "Categoria", "Quantidade", "Pagamento", "Valor total", "Data", "Status"]);
+    applyHeaderStyle(vendasSheet.getRow(4), FLUXY_COLORS.blue);
+
+    rows.forEach((row) => {
+      vendasSheet.addRow([
+        row.Produto,
+        row.Categoria,
+        row.Quantidade,
+        row.Pagamento,
+        row["Valor total"],
+        row.Data,
+        row.Status
+      ]);
+    });
+
+    for (let rowNumber = 5; rowNumber <= vendasSheet.rowCount; rowNumber++) {
+      const row = vendasSheet.getRow(rowNumber);
+      row.getCell(5).numFmt = '"R$" #,##0.00';
+
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: rowNumber % 2 === 0 ? "F8FBFF" : "FFFFFF" }
+        };
+      });
+    }
+
+    applyTableBorders(vendasSheet, 4, vendasSheet.rowCount, 1, 7);
+    vendasSheet.autoFilter = "A4:G4";
+
+    addWorksheetTitle(categoriasSheet, "Categorias", "Faturamento agrupado por categoria");
+    addLogoToWorksheet(workbook, categoriasSheet, logoData);
+
+    categoriasSheet.columns = [
+      { key: "Categoria", width: 28 },
+      { key: "Quantidade", width: 14 },
+      { key: "Faturamento", width: 18 }
+    ];
+
+    categoriasSheet.addRow([]);
+    categoriasSheet.addRow(["Categoria", "Quantidade", "Faturamento"]);
+    applyHeaderStyle(categoriasSheet.getRow(4), FLUXY_COLORS.aqua);
+
+    resumo.categorias.forEach((item) => {
+      categoriasSheet.addRow([item.nome, item.quantidade, item.valor]);
+    });
+
+    for (let rowNumber = 5; rowNumber <= categoriasSheet.rowCount; rowNumber++) {
+      categoriasSheet.getRow(rowNumber).getCell(3).numFmt = '"R$" #,##0.00';
+    }
+
+    applyTableBorders(categoriasSheet, 4, categoriasSheet.rowCount, 1, 3);
+    categoriasSheet.autoFilter = "A4:C4";
+
+    addWorksheetTitle(pagamentosSheet, "Pagamentos", "Faturamento agrupado por forma de pagamento");
+    addLogoToWorksheet(workbook, pagamentosSheet, logoData);
+
+    pagamentosSheet.columns = [
+      { key: "Pagamento", width: 28 },
+      { key: "Quantidade", width: 14 },
+      { key: "Faturamento", width: 18 }
+    ];
+
+    pagamentosSheet.addRow([]);
+    pagamentosSheet.addRow(["Pagamento", "Quantidade", "Faturamento"]);
+    applyHeaderStyle(pagamentosSheet.getRow(4), FLUXY_COLORS.green);
+
+    resumo.pagamentos.forEach((item) => {
+      pagamentosSheet.addRow([item.nome, item.quantidade, item.valor]);
+    });
+
+    for (let rowNumber = 5; rowNumber <= pagamentosSheet.rowCount; rowNumber++) {
+      pagamentosSheet.getRow(rowNumber).getCell(3).numFmt = '"R$" #,##0.00';
+    }
+
+    applyTableBorders(pagamentosSheet, 4, pagamentosSheet.rowCount, 1, 3);
+    pagamentosSheet.autoFilter = "A4:C4";
+
+    [resumoSheet, vendasSheet, categoriasSheet, pagamentosSheet].forEach((sheet) => {
+      sheet.eachRow((row) => {
+        row.height = row.height || 22;
+
+        row.eachCell((cell) => {
+          cell.alignment = {
+            vertical: "middle",
+            wrapText: true,
+            ...cell.alignment
+          };
+        });
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    saveAs(
+      new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      }),
+      `relatorio-fluxy-${getFileDate()}.xlsx`
+    );
+
+    notifyToast(
+      "success",
+      "file-spreadsheet",
+      "Excel Fluxy gerado",
+      "O relatório foi exportado com layout e cores da Fluxy."
+    );
+  } catch (error) {
+    console.error(error);
+
+    notifyToast(
+      "danger",
+      "file-warning",
+      "Erro ao gerar Excel",
+      "Não foi possível exportar o relatório estilizado."
+    );
+  }
 }
 
-function exportarPDF() {
+async function exportarPDF() {
   const rows = getExportRows();
   const vendas = obterVendasTratadas();
   const resumo = getResumo(vendas);
@@ -1083,125 +1503,178 @@ function exportarPDF() {
     return;
   }
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("p", "mm", "a4");
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("p", "mm", "a4");
 
-  const user = getUser();
-  const businessNameText = user.businessName || "Fluxy";
+    const logoBase64 = await getLogoForPdf();
+    const user = getUser();
+    const businessNameText = user.businessName || "Fluxy";
 
-  doc.setFillColor(11, 18, 32);
-  doc.rect(0, 0, 210, 34, "F");
+    doc.setFillColor(11, 18, 32);
+    doc.rect(0, 0, 210, 40, "F");
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
-  doc.text("Fluxy", 14, 15);
+    doc.setFillColor(52, 152, 219);
+    doc.rect(0, 38, 105, 2, "F");
 
-  doc.setFontSize(10);
-  doc.text("O fluxo certo para o seu negócio", 14, 22);
+    doc.setFillColor(26, 188, 156);
+    doc.rect(105, 38, 105, 2, "F");
 
-  doc.setTextColor(226, 232, 240);
-  doc.text(`Negócio: ${businessNameText}`, 130, 13);
-  doc.text(`Gerado em: ${formatDate(new Date())}`, 130, 20);
-  doc.text(`Período: ${getPeriodLabel()}`, 130, 27);
-
-  doc.setTextColor(15, 23, 42);
-  doc.setFontSize(16);
-  doc.text("Relatório de Vendas", 14, 46);
-
-  doc.setFontSize(10);
-  doc.text(`Categoria: ${filtroCategoriaInput.value}`, 14, 54);
-  doc.text(`Pagamento: ${filtroPagamentoInput.value}`, 70, 54);
-  doc.text(`Busca: ${buscarInput.value || "Não aplicada"}`, 130, 54);
-
-  doc.setFillColor(52, 152, 219);
-  doc.roundedRect(14, 64, 42, 24, 3, 3, "F");
-
-  doc.setFillColor(26, 188, 156);
-  doc.roundedRect(61, 64, 42, 24, 3, 3, "F");
-
-  doc.setFillColor(34, 197, 94);
-  doc.roundedRect(108, 64, 42, 24, 3, 3, "F");
-
-  doc.setFillColor(245, 158, 11);
-  doc.roundedRect(155, 64, 42, 24, 3, 3, "F");
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  doc.text("Faturamento", 18, 72);
-  doc.text("Vendas", 65, 72);
-  doc.text("Itens vendidos", 112, 72);
-  doc.text("Ticket médio", 159, 72);
-
-  doc.setFontSize(11);
-  doc.text(formatMoney(resumo.total), 18, 82);
-  doc.text(String(resumo.quantidade), 65, 82);
-  doc.text(String(resumo.itens), 112, 82);
-  doc.text(formatMoney(resumo.ticket), 159, 82);
-
-  doc.setTextColor(15, 23, 42);
-  doc.setFontSize(12);
-  doc.text("Insights principais", 14, 101);
-
-  doc.setFontSize(9);
-
-  const insights = [
-    `Produto destaque: ${resumo.produtos[0]?.nome || "-"} (${resumo.produtos[0]?.quantidade || 0} un.)`,
-    `Pagamento destaque: ${resumo.pagamentos[0]?.nome || "-"} (${formatMoney(resumo.pagamentos[0]?.valor || 0)})`,
-    `Categoria destaque: ${resumo.categorias[0]?.nome || "-"} (${formatMoney(resumo.categorias[0]?.valor || 0)})`
-  ];
-
-  insights.forEach((item, index) => {
-    doc.text(`• ${item}`, 14, 109 + index * 6);
-  });
-
-  doc.autoTable({
-    startY: 132,
-    head: [["Produto", "Categoria", "Qtd", "Pagamento", "Valor", "Data", "Status"]],
-    body: rows.map((row) => [
-      row.Produto,
-      row.Categoria,
-      row.Quantidade,
-      row.Pagamento,
-      formatMoney(row["Valor total"]),
-      row.Data,
-      row.Status
-    ]),
-    styles: {
-      fontSize: 8,
-      cellPadding: 2.5
-    },
-    headStyles: {
-      fillColor: [52, 152, 219],
-      textColor: [255, 255, 255]
-    },
-    alternateRowStyles: {
-      fillColor: [245, 248, 252]
-    },
-    margin: {
-      left: 14,
-      right: 14
+    if (logoBase64) {
+      doc.addImage(logoBase64, "PNG", 14, 8, 38, 16);
+    } else {
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.text("Fluxy", 14, 17);
     }
-  });
 
-  const pageCount = doc.internal.getNumberOfPages();
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.text("O fluxo certo para o seu negócio", 14, 31);
 
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
+    doc.setTextColor(226, 232, 240);
+    doc.setFontSize(9);
+    doc.text(`Negócio: ${businessNameText}`, 120, 12);
+    doc.text(`Gerado em: ${formatDate(new Date())}`, 120, 19);
+    doc.text(`Período: ${getPeriodLabel()}`, 120, 26);
+    doc.text(`Categoria: ${filtroCategoriaInput.value} | Pagamento: ${filtroPagamentoInput.value}`, 120, 33);
 
-    doc.setFontSize(8);
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(17);
+    doc.text("Relatório de Vendas", 14, 52);
+
+    doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
-    doc.text("Fluxy — O fluxo certo para o seu negócio", 14, 287);
-    doc.text(`Página ${i} de ${pageCount}`, 176, 287);
+    doc.text(`Busca aplicada: ${buscarInput.value || "Não aplicada"}`, 14, 59);
+    doc.text("Relatório gerado com os filtros ativos no sistema.", 14, 65);
+
+    doc.setFillColor(52, 152, 219);
+    doc.roundedRect(14, 74, 42, 24, 3, 3, "F");
+
+    doc.setFillColor(26, 188, 156);
+    doc.roundedRect(61, 74, 42, 24, 3, 3, "F");
+
+    doc.setFillColor(34, 197, 94);
+    doc.roundedRect(108, 74, 42, 24, 3, 3, "F");
+
+    doc.setFillColor(245, 158, 11);
+    doc.roundedRect(155, 74, 42, 24, 3, 3, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.text("Faturamento", 18, 82);
+    doc.text("Vendas", 65, 82);
+    doc.text("Itens vendidos", 112, 82);
+    doc.text("Ticket médio", 159, 82);
+
+    doc.setFontSize(10);
+    doc.text(formatMoney(resumo.total), 18, 92);
+    doc.text(String(resumo.quantidade), 65, 92);
+    doc.text(String(resumo.itens), 112, 92);
+    doc.text(formatMoney(resumo.ticket), 159, 92);
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(12);
+    doc.text("Insights principais", 14, 112);
+
+    doc.setDrawColor(52, 152, 219);
+    doc.setLineWidth(0.6);
+    doc.line(14, 116, 196, 116);
+
+    const produtosBaixo = getProdutosBaixoEstoque();
+
+    const insights = [
+      `Produto destaque: ${resumo.produtos[0]?.nome || "-"} (${resumo.produtos[0]?.quantidade || 0} un.)`,
+      `Pagamento destaque: ${resumo.pagamentos[0]?.nome || "-"} (${formatMoney(resumo.pagamentos[0]?.valor || 0)})`,
+      `Categoria destaque: ${resumo.categorias[0]?.nome || "-"} (${formatMoney(resumo.categorias[0]?.valor || 0)})`,
+      produtosBaixo.length
+        ? `Atenção ao estoque: ${produtosBaixo.length} produto(s) abaixo do mínimo.`
+        : "Estoque: sem alertas críticos no momento."
+    ];
+
+    doc.setFontSize(9);
+    doc.setTextColor(51, 65, 85);
+
+    insights.forEach((item, index) => {
+      doc.text(`• ${item}`, 14, 124 + index * 6);
+    });
+
+    doc.autoTable({
+      startY: 154,
+      head: [["Produto", "Categoria", "Qtd", "Pagamento", "Valor", "Data", "Status"]],
+      body: rows.map((row) => [
+        row.Produto,
+        row.Categoria,
+        row.Quantidade,
+        row.Pagamento,
+        formatMoney(row["Valor total"]),
+        row.Data,
+        row.Status
+      ]),
+      styles: {
+        fontSize: 8,
+        cellPadding: 2.6,
+        textColor: [15, 23, 42],
+        lineColor: [226, 232, 240],
+        lineWidth: 0.1
+      },
+      headStyles: {
+        fillColor: [52, 152, 219],
+        textColor: [255, 255, 255],
+        fontStyle: "bold"
+      },
+      alternateRowStyles: {
+        fillColor: [245, 248, 252]
+      },
+      columnStyles: {
+        4: {
+          halign: "right"
+        }
+      },
+      margin: {
+        left: 14,
+        right: 14
+      }
+    });
+
+    const pageCount = doc.internal.getNumberOfPages();
+
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+
+      doc.setFillColor(11, 18, 32);
+      doc.rect(0, 285, 210, 12, "F");
+
+      doc.setFillColor(52, 152, 219);
+      doc.rect(0, 285, 105, 1.2, "F");
+
+      doc.setFillColor(26, 188, 156);
+      doc.rect(105, 285, 105, 1.2, "F");
+
+      doc.setFontSize(8);
+      doc.setTextColor(226, 232, 240);
+      doc.text("Fluxy — O fluxo certo para o seu negócio", 14, 292);
+      doc.text(`Página ${i} de ${pageCount}`, 176, 292);
+    }
+
+    doc.save(`relatorio-fluxy-${getFileDate()}.pdf`);
+
+    notifyToast(
+      "success",
+      "file-text",
+      "PDF Fluxy gerado",
+      "O relatório foi exportado com a identidade visual da Fluxy."
+    );
+  } catch (error) {
+    console.error(error);
+
+    notifyToast(
+      "danger",
+      "file-warning",
+      "Erro ao gerar PDF",
+      "Não foi possível exportar o relatório em PDF."
+    );
   }
-
-  doc.save(`relatorio-fluxy-${getFileDate()}.pdf`);
-
-  notifyToast(
-    "success",
-    "file-text",
-    "PDF Fluxy gerado",
-    "O relatório foi exportado com identidade visual da Fluxy."
-  );
 }
 
 openFiltersBtn.addEventListener("click", () => {

@@ -96,7 +96,7 @@
 
             <div>
               <h2>Perfil do negócio</h2>
-              <p>Essas informações personalizam o sistema, o dashboard e os relatórios da Fluxy.</p>
+              <p>Essas informações personalizam o sistema, o dashboard, os relatórios e o Fluxter.</p>
             </div>
           </div>
 
@@ -242,8 +242,8 @@
             <p>
               O usuário é responsável por cadastrar informações corretas no sistema, incluindo
               produtos, categorias, preços, quantidades em estoque, vendas realizadas, formas de
-              pagamento e dados do negócio. A qualidade dos relatórios e indicadores depende
-              diretamente da precisão dos dados informados pelo usuário.
+              pagamento e dados do negócio. A qualidade dos relatórios, dashboards e análises do
+              Fluxter depende diretamente da precisão dos dados informados pelo usuário.
             </p>
           </div>
 
@@ -251,9 +251,9 @@
             <h3>4. Uso dos dados cadastrados</h3>
             <p>
               Os dados inseridos na Fluxy poderão ser utilizados dentro do próprio sistema para
-              exibir dashboards, gráficos, históricos, alertas de estoque, indicadores de vendas
-              e relatórios gerenciais. Essas informações têm como finalidade auxiliar o usuário
-              no acompanhamento e organização do seu negócio.
+              exibir dashboards, gráficos, históricos, alertas de estoque, indicadores de vendas,
+              relatórios gerenciais e respostas do Fluxter. Essas informações têm como finalidade
+              auxiliar o usuário no acompanhamento e organização do seu negócio.
             </p>
           </div>
 
@@ -268,13 +268,25 @@
           </div>
 
           <div class="terms-box">
-            <h3>6. Agente de IA Fluxter</h3>
+            <h3>6. Fluxter — Assistente Inteligente da Fluxy</h3>
             <p>
-              Quando autorizado pelo usuário, o agente de IA Fluxter poderá analisar dados do
-              sistema para gerar insights, explicar informações dos relatórios, identificar
-              oportunidades, apontar possíveis problemas no estoque e sugerir melhorias na
-              organização do negócio. O Fluxter atua como apoio inteligente, mas não substitui
-              análise profissional contábil, financeira ou jurídica.
+              O Fluxter é o Assistente Inteligente da Fluxy. Nesta primeira versão, ele funciona
+              com análises locais baseadas em regras e nos dados cadastrados no próprio sistema,
+              sem depender de API externa, crédito pago, n8n, OpenAI, Gemini ou outros serviços
+              de inteligência artificial generativa.
+            </p>
+
+            <p>
+              O Fluxter pode analisar vendas, produtos, categorias, formas de pagamento e estoque
+              para responder perguntas sobre desempenho, produto mais vendido, categoria em destaque,
+              estoque baixo, oportunidades e pontos de atenção. As respostas são geradas com base nos
+              dados reais cadastrados pelo usuário e devem ser usadas como apoio à organização do negócio.
+            </p>
+
+            <p>
+              Futuramente, a Fluxy poderá evoluir o Fluxter para uma integração com modelos de IA externos.
+              Caso isso aconteça, novas permissões e informações poderão ser apresentadas ao usuário antes
+              da ativação desse recurso.
             </p>
           </div>
 
@@ -292,9 +304,9 @@
             <h3>8. Permissões do usuário</h3>
             <p>
               Algumas funcionalidades dependem de autorização do usuário, como o uso dos dados
-              para relatórios, análise por IA e notificações inteligentes. Essas permissões podem
-              ser ativadas ou desativadas na área de configurações, respeitando a preferência do
-              usuário sobre como seus dados serão usados dentro da plataforma.
+              para relatórios, análises do Fluxter e notificações inteligentes. Essas permissões
+              podem ser ativadas ou desativadas na área de configurações, respeitando a preferência
+              do usuário sobre como seus dados serão usados dentro da plataforma.
             </p>
           </div>
 
@@ -311,9 +323,10 @@
             <h3>10. Limitações da Fluxy</h3>
             <p>
               A Fluxy é uma ferramenta de apoio à gestão e organização de dados. Os resultados,
-              relatórios e sugestões apresentados devem ser interpretados como auxílio à tomada
-              de decisão. O sistema não substitui serviços profissionais de contabilidade,
-              consultoria financeira, assessoria jurídica ou auditoria.
+              relatórios, dashboards, notificações e respostas do Fluxter devem ser interpretados
+              como auxílio à tomada de decisão. O sistema não substitui serviços profissionais de
+              contabilidade, consultoria financeira, assessoria jurídica, auditoria ou análise técnica
+              especializada.
             </p>
           </div>
 
@@ -321,8 +334,8 @@
             <h3>11. Atualizações do sistema</h3>
             <p>
               A Fluxy poderá receber melhorias, novas funcionalidades, ajustes visuais e correções
-              ao longo do tempo. Funcionalidades como relatórios avançados, exportação de dados e
-              IA Fluxter poderão ser expandidas conforme a evolução do sistema.
+              ao longo do tempo. Funcionalidades como relatórios avançados, exportação de dados,
+              notificações inteligentes e o Fluxter poderão ser expandidas conforme a evolução do sistema.
             </p>
           </div>
 
@@ -362,15 +375,18 @@
               <input id="permissao-relatorios" type="checkbox" />
               <span class="permission-box">
                 <strong>Permitir relatórios com meus dados</strong>
-                <small>Autoriza vendas e estoque a serem usados para gráficos, indicadores e análises.</small>
+                <small>Autoriza vendas, produtos e estoque a serem usados para gráficos, indicadores, PDF e Excel.</small>
               </span>
             </label>
 
             <label class="permission-card">
               <input id="permissao-ia" type="checkbox" />
               <span class="permission-box">
-                <strong>Permitir análise da IA Fluxter</strong>
-                <small>Autoriza o Fluxter a analisar vendas, produtos e estoque para gerar insights.</small>
+                <strong>Permitir análises do Fluxter</strong>
+                <small>
+                  Autoriza o Fluxter, Assistente Inteligente da Fluxy, a analisar vendas, produtos,
+                  categorias e estoque dentro do próprio sistema para gerar respostas e insights locais.
+                </small>
               </span>
             </label>
 
@@ -378,7 +394,7 @@
               <input id="permissao-notificacoes" type="checkbox" />
               <span class="permission-box">
                 <strong>Permitir notificações inteligentes</strong>
-                <small>Permite alertas sobre estoque baixo, oportunidades, movimentações e recomendações.</small>
+                <small>Permite alertas sobre estoque baixo, oportunidades, movimentações e recomendações do sistema.</small>
               </span>
             </label>
           </div>

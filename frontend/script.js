@@ -13,12 +13,17 @@ const panelLogin = document.getElementById("panel-login");
 const panelRegister = document.getElementById("panel-register");
 const loginForm = document.getElementById("panel-login");
 const registerForm = document.getElementById("panel-register");
+const forgotForm = document.getElementById("forgot-form");
+const resetForm = document.getElementById("reset-form");
+
 const messageBox = document.getElementById("auth-message");
 const sessionBox = document.getElementById("session-box");
 const sessionText = document.getElementById("session-text");
 const logoutBtn = document.getElementById("logout-btn");
 
 const isAuthPage = Boolean(tabLogin && tabRegister && loginForm && registerForm);
+const isForgotPage = Boolean(forgotForm);
+const isResetPage = Boolean(resetForm);
 const isDashboardPage = window.location.pathname.includes("dashboard.html");
 
 function getToken() {
@@ -87,6 +92,23 @@ function validateRegisterData({ name, email, password, confirmPassword }) {
   return null;
 }
 
+function validateEmail(email) {
+  if (!email || !email.includes("@")) {
+    return "Informe um e-mail válido.";
+  }
+
+  return null;
+}
+
+function getResetParams() {
+  const params = new URLSearchParams(window.location.search);
+
+  return {
+    token: params.get("token"),
+    userId: params.get("id")
+  };
+}
+
 if (isAuthPage) {
   registerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -119,6 +141,7 @@ if (isAuthPage) {
 
       showMessage("Conta criada com sucesso! Faça login.", "success");
       registerForm.reset();
+
       setTimeout(() => setActiveTab("login"), 700);
     } catch {
       showMessage("Erro ao conectar com o servidor.", "error");
@@ -129,6 +152,11 @@ if (isAuthPage) {
     event.preventDefault();
 
     const data = Object.fromEntries(new FormData(loginForm));
+
+    if (!data.email || !data.password) {
+      showMessage("Informe e-mail e senha.", "error");
+      return;
+    }
 
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
@@ -157,7 +185,108 @@ if (isAuthPage) {
 
   tabLogin.addEventListener("click", () => setActiveTab("login"));
   tabRegister.addEventListener("click", () => setActiveTab("register"));
+
   setActiveTab("login");
+}
+
+if (isForgotPage) {
+  forgotForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const data = Object.fromEntries(new FormData(forgotForm));
+    const error = validateEmail(data.email);
+
+    if (error) {
+      showMessage(error, "error");
+      return;
+    }
+
+    try {
+      showMessage("Enviando link de recuperação...", "info");
+
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: data.email
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        showMessage(result.error || "Não foi possível enviar o e-mail.", "error");
+        return;
+      }
+
+      showMessage(
+        result.message || "Se o e-mail estiver cadastrado, enviaremos as instruções de recuperação.",
+        "success"
+      );
+
+      forgotForm.reset();
+    } catch {
+      showMessage("Erro ao conectar com o servidor.", "error");
+    }
+  });
+}
+
+if (isResetPage) {
+  const { token, userId } = getResetParams();
+
+  if (!token || !userId) {
+    showMessage("Link inválido. Solicite uma nova recuperação de senha.", "error");
+
+    if (resetForm) {
+      resetForm.querySelector("button[type='submit']").disabled = true;
+    }
+  }
+
+  resetForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const data = Object.fromEntries(new FormData(resetForm));
+
+    if (!data.password || data.password.length < 6) {
+      showMessage("A nova senha deve ter no mínimo 6 caracteres.", "error");
+      return;
+    }
+
+    if (data.password !== data.confirmPassword) {
+      showMessage("As senhas não conferem.", "error");
+      return;
+    }
+
+    try {
+      showMessage("Salvando nova senha...", "info");
+
+      const response = await fetch(`${API_URL}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          token,
+          password: data.password
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        showMessage(result.error || "Não foi possível redefinir a senha.", "error");
+        return;
+      }
+
+      showMessage(result.message || "Senha redefinida com sucesso.", "success");
+      resetForm.reset();
+
+      setTimeout(() => {
+        window.location.href = "auth.html";
+      }, 1600);
+    } catch {
+      showMessage("Erro ao conectar com o servidor.", "error");
+    }
+  });
 }
 
 function sair() {
@@ -196,7 +325,7 @@ function initHomeEffects() {
   revealItems.forEach((item) => observer.observe(item));
 }
 
-if (!isAuthPage && !isDashboardPage) {
+if (!isAuthPage && !isForgotPage && !isResetPage && !isDashboardPage) {
   initHomeEffects();
 }
 
