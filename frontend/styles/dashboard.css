@@ -188,6 +188,53 @@ nav a.active {
   color: var(--muted);
 }
 
+
+.dashboard-business-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dashboard-business-logo {
+  width: 62px;
+  height: 62px;
+  min-width: 62px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(52, 152, 219, 0.28);
+  background:
+    linear-gradient(135deg, rgba(52, 152, 219, 0.16), rgba(26, 188, 156, 0.14)),
+    var(--card);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.16);
+}
+
+.dashboard-business-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dashboard-business-logo span {
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+}
+
+.dashboard-business-logo svg {
+  width: 28px;
+  height: 28px;
+}
+
+#dashboard-business-title {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+
 .topbar-actions {
   display: flex;
   align-items: center;
@@ -1088,5 +1135,21 @@ select:focus {
 
   .payment-summary strong {
     font-size: 12px;
+  }
+}
+@media (max-width: 700px) {
+  .dashboard-business-head {
+    align-items: flex-start;
+  }
+
+  .dashboard-business-logo {
+    width: 54px;
+    height: 54px;
+    min-width: 54px;
+    border-radius: 17px;
+  }
+
+  #dashboard-business-title {
+    font-size: 1.55rem;
   }
 }

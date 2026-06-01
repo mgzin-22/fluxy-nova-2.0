@@ -1,6 +1,7 @@
 const API_BASE = "https://fluxy-api-r0lt.onrender.com";
 const VENDAS_API = `${API_BASE}/vendas`;
 const PRODUCTS_API = `${API_BASE}/products`;
+const USER_API = `${API_BASE}/user/me`;
 
 const TOKEN_KEY = "fluxy_token";
 const USER_KEY = "fluxy_user";
@@ -8,6 +9,7 @@ const THEME_KEY = "fluxy_theme";
 const TERMS_KEY = "fluxy_terms_permissions";
 
 const LOGO_PATHS = [
+  "assets/logo.png",
   "assets/logo branca.png",
   "assets/logo-fluxy.png",
   "assets/logo-branca.png",
@@ -186,12 +188,17 @@ async function fetchArrayBufferIfExists(path) {
 }
 
 async function getLogoForExcel() {
-  for (const path of LOGO_PATHS) {
+  const user = getUser();
+  const logoSources = user?.businessLogoUrl
+    ? [user.businessLogoUrl, ...LOGO_PATHS]
+    : [...LOGO_PATHS];
+
+  for (const path of logoSources) {
     const buffer = await fetchArrayBufferIfExists(path);
 
     if (buffer) {
       const extension =
-        path.toLowerCase().endsWith(".jpg") || path.toLowerCase().endsWith(".jpeg")
+        path.toLowerCase().includes(".jpg") || path.toLowerCase().includes(".jpeg")
           ? "jpeg"
           : "png";
 
@@ -231,7 +238,12 @@ function carregarImagemBase64(path) {
 }
 
 async function getLogoForPdf() {
-  for (const path of LOGO_PATHS) {
+  const user = getUser();
+  const logoSources = user?.businessLogoUrl
+    ? [user.businessLogoUrl, ...LOGO_PATHS]
+    : [...LOGO_PATHS];
+
+  for (const path of logoSources) {
     const base64 = await carregarImagemBase64(path);
 
     if (base64) return base64;
@@ -246,18 +258,24 @@ async function carregarDados() {
       Authorization: `Bearer ${token}`
     };
 
-    const [vendasResponse, produtosResponse] = await Promise.all([
+    const [vendasResponse, produtosResponse, userResponse] = await Promise.all([
       fetch(VENDAS_API, { headers }),
-      fetch(PRODUCTS_API, { headers })
+      fetch(PRODUCTS_API, { headers }),
+      fetch(USER_API, { headers })
     ]);
 
-    if (vendasResponse.status === 401 || produtosResponse.status === 401) {
+    if (vendasResponse.status === 401 || produtosResponse.status === 401 || userResponse.status === 401) {
       sair();
       return;
     }
 
     const vendasData = await vendasResponse.json();
     const produtosData = await produtosResponse.json();
+    const userData = await userResponse.json();
+
+    if (userResponse.ok && userData) {
+      localStorage.setItem(USER_KEY, JSON.stringify(userData));
+    }
 
     vendasGlobais = vendasResponse.ok && Array.isArray(vendasData) ? vendasData : [];
     produtosGlobais = produtosResponse.ok && Array.isArray(produtosData) ? produtosData : [];

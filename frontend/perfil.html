@@ -226,6 +226,32 @@
                 <span></span>
               </label>
             </div>
+
+            <div class="preference-card preference-card-column">
+              <div>
+                <h3>Canal de notificação</h3>
+                <p>Escolha onde o sistema deve priorizar os avisos do negócio.</p>
+              </div>
+
+              <select id="canal-notificacao" class="settings-select">
+                <option value="sistema">Sistema/App</option>
+                <option value="email">E-mail</option>
+                <option value="whatsapp">WhatsApp</option>
+              </select>
+            </div>
+
+            <div class="preference-card preference-card-column">
+              <div>
+                <h3>Frequência de notificação</h3>
+                <p>Defina quando os alertas devem ser agrupados ou exibidos.</p>
+              </div>
+
+              <select id="frequencia-notificacao" class="settings-select">
+                <option value="evento">Por evento</option>
+                <option value="diario">Resumo diário</option>
+                <option value="personalizado">Personalizado</option>
+              </select>
+            </div>
           </div>
 
           <button id="salvar-preferencias" class="settings-save-btn" type="button">
@@ -408,12 +434,23 @@
             </label>
 
             <label class="permission-card">
-              <input id="permissao-ia" type="checkbox" />
+              <input id="permissao-fluxter-local" type="checkbox" />
               <span class="permission-box">
-                <strong>Permitir análises do Fluxter</strong>
+                <strong>Permitir Fluxter local</strong>
                 <small>
                   Autoriza o Fluxter, Assistente Inteligente da Fluxy, a analisar vendas, produtos,
-                  categorias e estoque dentro do próprio sistema para gerar respostas e insights locais.
+                  categorias e estoque dentro do próprio sistema com regras locais.
+                </small>
+              </span>
+            </label>
+
+            <label class="permission-card">
+              <input id="permissao-ia-externa" type="checkbox" />
+              <span class="permission-box">
+                <strong>Permitir futura IA externa</strong>
+                <small>
+                  Deixa autorizado, futuramente, integrar o Fluxter a serviços externos como n8n,
+                  Gemini, Groq, OpenRouter ou outra API de IA, caso esse recurso seja ativado.
                 </small>
               </span>
             </label>

@@ -4,6 +4,9 @@ const USER_KEY = "fluxy_user";
 const THEME_KEY = "fluxy_theme";
 
 const userName = document.getElementById("user-name");
+const dashboardBusinessTitle = document.getElementById("dashboard-business-title");
+const dashboardBusinessLogoImg = document.getElementById("dashboard-business-logo-img");
+const dashboardBusinessLogoPlaceholder = document.getElementById("dashboard-business-logo-placeholder");
 
 const totalVendidoEl = document.getElementById("total-vendido");
 const vendasHojeEl = document.getElementById("vendas-hoje");
@@ -98,11 +101,32 @@ function aplicarTemaSalvo() {
   document.body.classList.toggle("light", savedTheme === "light");
 }
 
+function renderBusinessLogoDashboard(url) {
+  if (!dashboardBusinessLogoImg || !dashboardBusinessLogoPlaceholder) return;
+
+  if (url) {
+    dashboardBusinessLogoImg.src = url;
+    dashboardBusinessLogoImg.hidden = false;
+    dashboardBusinessLogoPlaceholder.hidden = true;
+    return;
+  }
+
+  dashboardBusinessLogoImg.src = "";
+  dashboardBusinessLogoImg.hidden = true;
+  dashboardBusinessLogoPlaceholder.hidden = false;
+}
+
 function preencherUsuario() {
   const user = getUser();
 
+  if (dashboardBusinessTitle) {
+    dashboardBusinessTitle.textContent = user?.businessName || "Dashboard";
+  }
+
+  renderBusinessLogoDashboard(user?.businessLogoUrl);
+
   if (user?.businessName) {
-    userName.textContent = `Visão geral de ${user.businessName}`;
+    userName.textContent = "Visão geral do seu negócio";
     return;
   }
 
@@ -112,6 +136,25 @@ function preencherUsuario() {
   }
 
   userName.textContent = "Visão geral do seu negócio";
+}
+
+async function carregarPerfilUsuario() {
+  try {
+    const response = await fetch(`${API_URL}/user/me`, {
+      headers: {
+        Authorization: `Bearer ${getToken()}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) return;
+
+    localStorage.setItem(USER_KEY, JSON.stringify(data));
+    preencherUsuario();
+  } catch (error) {
+    console.warn("Não foi possível carregar o perfil do usuário.", error);
+  }
 }
 
 async function carregarDados() {
@@ -843,6 +886,7 @@ function sair() {
 protegerDashboard();
 aplicarTemaSalvo();
 preencherUsuario();
+carregarPerfilUsuario();
 configurarFiltros();
 carregarDados();
 
