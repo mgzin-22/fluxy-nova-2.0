@@ -1,7 +1,6 @@
 const API_BASE = "https://fluxy-api-r0lt.onrender.com";
 const VENDAS_API = `${API_BASE}/vendas`;
 const PRODUCTS_API = `${API_BASE}/products`;
-const USER_API = `${API_BASE}/user/me`;
 
 const TOKEN_KEY = "fluxy_token";
 const USER_KEY = "fluxy_user";
@@ -9,7 +8,6 @@ const THEME_KEY = "fluxy_theme";
 const TERMS_KEY = "fluxy_terms_permissions";
 
 const LOGO_PATHS = [
-  "assets/logo.png",
   "assets/logo branca.png",
   "assets/logo-fluxy.png",
   "assets/logo-branca.png",
@@ -94,16 +92,65 @@ function getUser() {
 }
 
 function getTerms() {
+  const defaultTerms = {
+    acceptedTerms: false,
+    allowReports: false,
+    allowFluxterLocal: false,
+    allowExternalAI: false,
+    allowSmartNotifications: false
+  };
+
   const terms = localStorage.getItem(TERMS_KEY);
 
-  return terms
-    ? JSON.parse(terms)
-    : {
-        acceptedTerms: false,
-        allowReports: true,
-        allowAI: true,
-        allowSmartNotifications: true
-      };
+  if (!terms) return defaultTerms;
+
+  try {
+    const parsedTerms = JSON.parse(terms);
+
+    return {
+      ...defaultTerms,
+      ...parsedTerms,
+      allowFluxterLocal:
+        parsedTerms.allowFluxterLocal !== undefined
+          ? parsedTerms.allowFluxterLocal
+          : Boolean(parsedTerms.allowAI),
+      allowExternalAI: Boolean(parsedTerms.allowExternalAI)
+    };
+  } catch (error) {
+    return defaultTerms;
+  }
+}
+
+function canUseFluxter() {
+  const terms = getTerms();
+  return Boolean(terms.acceptedTerms && terms.allowFluxterLocal);
+}
+
+function renderFluxterBlocked() {
+  if (aiAnalysisContent) {
+    aiAnalysisContent.innerHTML = `
+      <div class="fluxter-blocked">
+        <h4 class="warning">Fluxter desativado</h4>
+        <p>
+          Para usar o Assistente Inteligente da Fluxy, aceite os termos e ative a permissão
+          <strong>Permitir análises do Fluxter</strong> em <strong>Configurações &gt; Permissões</strong>.
+        </p>
+      </div>
+    `;
+  }
+
+  if (aiAnalysisTime) {
+    aiAnalysisTime.textContent = "Permissão necessária";
+  }
+}
+
+function notifyFluxterPermissionRequired() {
+  notifyToast(
+    "warning",
+    "shield-alert",
+    "Permissão necessária",
+    "Ative a permissão do Fluxter em Configurações para usar o assistente."
+  );
 }
 
 function aplicarTemaSalvo() {
@@ -188,17 +235,12 @@ async function fetchArrayBufferIfExists(path) {
 }
 
 async function getLogoForExcel() {
-  const user = getUser();
-  const logoSources = user?.businessLogoUrl
-    ? [user.businessLogoUrl, ...LOGO_PATHS]
-    : [...LOGO_PATHS];
-
-  for (const path of logoSources) {
+  for (const path of LOGO_PATHS) {
     const buffer = await fetchArrayBufferIfExists(path);
 
     if (buffer) {
       const extension =
-        path.toLowerCase().includes(".jpg") || path.toLowerCase().includes(".jpeg")
+        path.toLowerCase().endsWith(".jpg") || path.toLowerCase().endsWith(".jpeg")
           ? "jpeg"
           : "png";
 
@@ -238,12 +280,7 @@ function carregarImagemBase64(path) {
 }
 
 async function getLogoForPdf() {
-  const user = getUser();
-  const logoSources = user?.businessLogoUrl
-    ? [user.businessLogoUrl, ...LOGO_PATHS]
-    : [...LOGO_PATHS];
-
-  for (const path of logoSources) {
+  for (const path of LOGO_PATHS) {
     const base64 = await carregarImagemBase64(path);
 
     if (base64) return base64;
@@ -258,24 +295,18 @@ async function carregarDados() {
       Authorization: `Bearer ${token}`
     };
 
-    const [vendasResponse, produtosResponse, userResponse] = await Promise.all([
+    const [vendasResponse, produtosResponse] = await Promise.all([
       fetch(VENDAS_API, { headers }),
-      fetch(PRODUCTS_API, { headers }),
-      fetch(USER_API, { headers })
+      fetch(PRODUCTS_API, { headers })
     ]);
 
-    if (vendasResponse.status === 401 || produtosResponse.status === 401 || userResponse.status === 401) {
+    if (vendasResponse.status === 401 || produtosResponse.status === 401) {
       sair();
       return;
     }
 
     const vendasData = await vendasResponse.json();
     const produtosData = await produtosResponse.json();
-    const userData = await userResponse.json();
-
-    if (userResponse.ok && userData) {
-      localStorage.setItem(USER_KEY, JSON.stringify(userData));
-    }
 
     vendasGlobais = vendasResponse.ok && Array.isArray(vendasData) ? vendasData : [];
     produtosGlobais = produtosResponse.ok && Array.isArray(produtosData) ? produtosData : [];
@@ -300,14 +331,17 @@ async function carregarDados() {
 
     atualizarCategorias();
     renderizarRelatorio();
-    gerarAnaliseFluxter();
 
-    notifyToast(
-      "success",
-      "message-circle",
-      "Fluxter atualizado",
-      "Os dados do relatório foram analisados."
-    );
+    const fluxterGerouAnalise = gerarAnaliseFluxter();
+
+    if (fluxterGerouAnalise) {
+      notifyToast(
+        "success",
+        "message-circle",
+        "Fluxter atualizado",
+        "Os dados do relatório foram analisados."
+      );
+    }
   } catch (error) {
     console.error(error);
 
@@ -1045,14 +1079,26 @@ function responderFluxter(pergunta) {
 }
 
 function gerarAnaliseFluxter() {
+  if (!canUseFluxter()) {
+    renderFluxterBlocked();
+    return false;
+  }
+
   aiAnalysisTime.textContent = formatDate(new Date());
   aiAnalysisContent.innerHTML = gerarResumoGeral();
+  return true;
 }
 
 function responderPerguntaFluxter() {
   const pergunta = aiQuestionInput.value.trim();
 
   if (!pergunta) return;
+
+  if (!canUseFluxter()) {
+    renderFluxterBlocked();
+    notifyFluxterPermissionRequired();
+    return;
+  }
 
   const resposta = responderFluxter(pergunta);
 
@@ -1812,7 +1858,12 @@ clearFiltersBtn.addEventListener("click", () => {
 });
 
 generateAiBtn.addEventListener("click", () => {
-  gerarAnaliseFluxter();
+  const fluxterGerouAnalise = gerarAnaliseFluxter();
+
+  if (!fluxterGerouAnalise) {
+    notifyFluxterPermissionRequired();
+    return;
+  }
 
   notifyToast(
     "success",

@@ -6,8 +6,6 @@ const THEME_KEY = "fluxy_theme";
 
 const NOTIFICATIONS_KEY = "fluxy_notifications_enabled";
 const STOCK_ALERTS_KEY = "fluxy_stock_alerts_enabled";
-const NOTIFICATION_CHANNEL_KEY = "fluxy_notification_channel";
-const NOTIFICATION_FREQUENCY_KEY = "fluxy_notification_frequency";
 const TERMS_KEY = "fluxy_terms_permissions";
 
 const token = localStorage.getItem(TOKEN_KEY);
@@ -34,14 +32,11 @@ const themeLightBtn = document.getElementById("theme-light");
 
 const notificacoesVisuaisInput = document.getElementById("notificacoes-visuais");
 const alertasEstoqueInput = document.getElementById("alertas-estoque");
-const canalNotificacaoInput = document.getElementById("canal-notificacao");
-const frequenciaNotificacaoInput = document.getElementById("frequencia-notificacao");
 const salvarPreferenciasBtn = document.getElementById("salvar-preferencias");
 
 const aceiteTermosInput = document.getElementById("aceite-termos");
 const permissaoRelatoriosInput = document.getElementById("permissao-relatorios");
-const permissaoFluxterLocalInput = document.getElementById("permissao-fluxter-local");
-const permissaoIaExternaInput = document.getElementById("permissao-ia-externa");
+const permissaoIaInput = document.getElementById("permissao-ia");
 const permissaoNotificacoesInput = document.getElementById("permissao-notificacoes");
 const salvarPermissoesBtn = document.getElementById("salvar-permissoes");
 
@@ -65,18 +60,33 @@ function saveUser(user) {
 }
 
 function getTerms() {
+  const defaultTerms = {
+    acceptedTerms: false,
+    allowReports: false,
+    allowFluxterLocal: false,
+    allowExternalAI: false,
+    allowSmartNotifications: false
+  };
+
   const terms = localStorage.getItem(TERMS_KEY);
 
-  return terms
-    ? JSON.parse(terms)
-    : {
-        acceptedTerms: false,
-        allowReports: false,
-        allowFluxterLocal: false,
-        allowExternalAI: false,
-        allowAI: false,
-        allowSmartNotifications: false
-      };
+  if (!terms) return defaultTerms;
+
+  try {
+    const parsedTerms = JSON.parse(terms);
+
+    return {
+      ...defaultTerms,
+      ...parsedTerms,
+      allowFluxterLocal:
+        parsedTerms.allowFluxterLocal !== undefined
+          ? parsedTerms.allowFluxterLocal
+          : Boolean(parsedTerms.allowAI),
+      allowExternalAI: Boolean(parsedTerms.allowExternalAI)
+    };
+  } catch (error) {
+    return defaultTerms;
+  }
 }
 
 function saveTerms(terms) {
@@ -164,8 +174,6 @@ async function carregarDados() {
   const savedTheme = localStorage.getItem(THEME_KEY) || "dark";
   const notificationsEnabled = localStorage.getItem(NOTIFICATIONS_KEY);
   const stockAlertsEnabled = localStorage.getItem(STOCK_ALERTS_KEY);
-  const notificationChannel = localStorage.getItem(NOTIFICATION_CHANNEL_KEY) || "sistema";
-  const notificationFrequency = localStorage.getItem(NOTIFICATION_FREQUENCY_KEY) || "evento";
   const terms = getTerms();
 
   notificacoesVisuaisInput.checked =
@@ -174,18 +182,9 @@ async function carregarDados() {
   alertasEstoqueInput.checked =
     stockAlertsEnabled === null ? true : stockAlertsEnabled === "true";
 
-  if (canalNotificacaoInput) {
-    canalNotificacaoInput.value = notificationChannel;
-  }
-
-  if (frequenciaNotificacaoInput) {
-    frequenciaNotificacaoInput.value = notificationFrequency;
-  }
-
   aceiteTermosInput.checked = terms.acceptedTerms;
   permissaoRelatoriosInput.checked = terms.allowReports;
-  permissaoFluxterLocalInput.checked = terms.allowFluxterLocal ?? terms.allowAI ?? false;
-  permissaoIaExternaInput.checked = terms.allowExternalAI ?? false;
+  permissaoIaInput.checked = terms.allowFluxterLocal;
   permissaoNotificacoesInput.checked = terms.allowSmartNotifications;
 
   aplicarTema(savedTheme);
@@ -374,8 +373,6 @@ themeLightBtn.addEventListener("click", () => {
 salvarPreferenciasBtn.addEventListener("click", () => {
   localStorage.setItem(NOTIFICATIONS_KEY, String(notificacoesVisuaisInput.checked));
   localStorage.setItem(STOCK_ALERTS_KEY, String(alertasEstoqueInput.checked));
-  localStorage.setItem(NOTIFICATION_CHANNEL_KEY, canalNotificacaoInput?.value || "sistema");
-  localStorage.setItem(NOTIFICATION_FREQUENCY_KEY, frequenciaNotificacaoInput?.value || "evento");
 
   if (notificacoesVisuaisInput.checked) {
     notifyToast(
@@ -391,9 +388,9 @@ salvarPermissoesBtn.addEventListener("click", () => {
   const terms = {
     acceptedTerms: aceiteTermosInput.checked,
     allowReports: permissaoRelatoriosInput.checked,
-    allowFluxterLocal: permissaoFluxterLocalInput.checked,
-    allowExternalAI: permissaoIaExternaInput.checked,
-    allowAI: permissaoFluxterLocalInput.checked,
+    allowFluxterLocal: permissaoIaInput.checked,
+    allowAI: permissaoIaInput.checked,
+    allowExternalAI: false,
     allowSmartNotifications: permissaoNotificacoesInput.checked
   };
 
