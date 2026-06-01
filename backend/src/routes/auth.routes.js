@@ -1,301 +1,254 @@
 const express = require("express");
 const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
-const cloudinary = require("cloudinary").v2;
-const authMiddleware = require("../middlewares/auth.middleware");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const prisma = new PrismaClient();
 
-router.use(authMiddleware);
+const SECRET = process.env.JWT_SECRET || "fluxy_secret";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://127.0.0.1:5500/frontend";
 
-function normalizeText(value) {
-  return typeof value === "string" ? value.trim() : "";
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
 }
 
-function toNumber(value) {
-  if (value === "" || value === null || value === undefined) return null;
-  return Number(value);
+function createResetToken() {
+  return crypto.randomBytes(32).toString("hex");
 }
 
-function isInvalidNumber(value) {
-  return Number.isNaN(value) || value === null;
+function hashResetToken(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-async function uploadProductImage(imageBase64) {
-  if (!imageBase64) return null;
-
-  const uploadResult = await cloudinary.uploader.upload(imageBase64, {
-    folder: "fluxy/products",
-    resource_type: "image"
-  });
-
-  return uploadResult.secure_url;
-}
-
-async function createProductStockNotification(product, userId) {
-  const stock = Number(product.stock || 0);
-  const minStock = Number(product.minStock || 0);
-
-  if (stock > 0 && (!minStock || stock > minStock)) return;
-
-  const kind = stock <= 0 ? "STOCK_OUT" : "STOCK_LOW";
-  const type = stock <= 0 ? "danger" : "warning";
-  const icon = stock <= 0 ? "package-x" : "triangle-alert";
-  const title = stock <= 0 ? "Produto sem estoque" : "Estoque baixo";
-
-  const message =
-    stock <= 0
-      ? `${product.name} está sem estoque.`
-      : `${product.name} está com ${stock} unidade(s). Estoque mínimo: ${minStock}.`;
-
-  const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-  const exists = await prisma.notification.findFirst({
-    where: {
-      userId,
-      kind,
-      sourceId: product.id,
-      sourceType: "Product",
-      read: false,
-      createdAt: {
-        gte: last24h
-      }
-    }
-  });
-
-  if (exists) return;
-
-  await prisma.notification.create({
-    data: {
-      userId,
-      title,
-      message,
-      type,
-      icon,
-      kind,
-      sourceId: product.id,
-      sourceType: "Product"
-    }
-  });
-}
-
-// LISTAR PRODUTOS
-router.get("/", async (req, res) => {
+// REGISTER
+router.post("/register", async (req, res) => {
   try {
-    const products = await prisma.product.findMany({
+    const { name, email, password } = req.body;
+
+    const normalizedEmail = normalizeEmail(email);
+
+    if (!name || !normalizedEmail || !password) {
+      return res.status(400).json({
+        error: "Preencha nome, e-mail e senha."
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        error: "A senha deve ter no mínimo 6 caracteres."
+      });
+    }
+
+    const userExists = await prisma.user.findUnique({
       where: {
-        userId: req.userId
-      },
-      orderBy: {
-        createdAt: "desc"
+        email: normalizedEmail
       }
     });
 
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({
-      error: "Erro ao listar produtos.",
-      details: error.message
-    });
-  }
-});
-
-// CRIAR PRODUTO
-router.post("/", async (req, res) => {
-  try {
-    const { name, category, price, stock, minStock, imageBase64 } = req.body;
-
-    const productName = normalizeText(name);
-    const productCategory = normalizeText(category);
-    const productPrice = toNumber(price);
-    const productStock = toNumber(stock);
-    const productMinStock =
-      minStock === "" || minStock === null || minStock === undefined
-        ? null
-        : toNumber(minStock);
-
-    if (!productName || !productCategory || price === undefined || stock === undefined) {
+    if (userExists) {
       return res.status(400).json({
-        error: "Preencha nome, categoria, preço e estoque."
+        error: "Email já existe"
       });
     }
 
-    if (isInvalidNumber(productPrice) || productPrice < 0) {
-      return res.status(400).json({
-        error: "Informe um preço válido."
-      });
-    }
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    if (isInvalidNumber(productStock) || productStock < 0 || !Number.isInteger(productStock)) {
-      return res.status(400).json({
-        error: "Informe uma quantidade de estoque válida."
-      });
-    }
-
-    if (
-      productMinStock !== null &&
-      (isInvalidNumber(productMinStock) || productMinStock < 0 || !Number.isInteger(productMinStock))
-    ) {
-      return res.status(400).json({
-        error: "Informe um estoque mínimo válido."
-      });
-    }
-
-    const imageUrl = await uploadProductImage(imageBase64);
-
-    const product = await prisma.product.create({
+    const user = await prisma.user.create({
       data: {
-        name: productName,
-        category: productCategory,
-        price: productPrice,
-        stock: productStock,
-        minStock: productMinStock,
-        imageUrl,
-        userId: req.userId
+        name,
+        email: normalizedEmail,
+        password: hashedPassword
       }
     });
 
-    await createProductStockNotification(product, req.userId);
+    const {
+      password: _password,
+      resetToken,
+      resetTokenExpires,
+      ...safeUser
+    } = user;
 
-    res.status(201).json(product);
+    res.status(201).json(safeUser);
   } catch (error) {
     res.status(500).json({
-      error: "Erro ao criar produto.",
-      details: error.message
+      error: error.message
     });
   }
 });
 
-// EDITAR PRODUTO
-router.put("/:id", async (req, res) => {
+// LOGIN
+router.post("/login", async (req, res) => {
   try {
-    const { name, category, price, stock, minStock, imageBase64 } = req.body;
+    const { email, password } = req.body;
 
-    const productExists = await prisma.product.findFirst({
+    const normalizedEmail = normalizeEmail(email);
+
+    if (!normalizedEmail || !password) {
+      return res.status(400).json({
+        error: "Informe e-mail e senha."
+      });
+    }
+
+    const user = await prisma.user.findUnique({
       where: {
-        id: req.params.id,
-        userId: req.userId
+        email: normalizedEmail
       }
     });
 
-    if (!productExists) {
-      return res.status(404).json({
-        error: "Produto não encontrado."
-      });
-    }
-
-    const productName = normalizeText(name);
-    const productCategory = normalizeText(category);
-    const productPrice = toNumber(price);
-    const productStock = toNumber(stock);
-    const productMinStock =
-      minStock === "" || minStock === null || minStock === undefined
-        ? null
-        : toNumber(minStock);
-
-    if (!productName || !productCategory || price === undefined || stock === undefined) {
+    if (!user) {
       return res.status(400).json({
-        error: "Preencha nome, categoria, preço e estoque."
+        error: "Usuário não encontrado"
       });
     }
 
-    if (isInvalidNumber(productPrice) || productPrice < 0) {
+    const valid = await bcrypt.compare(password, user.password);
+
+    if (!valid) {
       return res.status(400).json({
-        error: "Informe um preço válido."
+        error: "Senha inválida"
       });
     }
 
-    if (isInvalidNumber(productStock) || productStock < 0 || !Number.isInteger(productStock)) {
+    const token = jwt.sign(
+      {
+        userId: user.id
+      },
+      SECRET,
+      {
+        expiresIn: "7d"
+      }
+    );
+
+    const {
+      password: _password,
+      resetToken,
+      resetTokenExpires,
+      ...safeUser
+    } = user;
+
+    res.json({
+      token,
+      user: safeUser
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+// ESQUECI MINHA SENHA — TOKEN TEMPORÁRIO
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const normalizedEmail = normalizeEmail(email);
+
+    if (!normalizedEmail) {
       return res.status(400).json({
-        error: "Informe uma quantidade de estoque válida."
+        error: "Informe o e-mail cadastrado."
       });
     }
 
-    if (
-      productMinStock !== null &&
-      (isInvalidNumber(productMinStock) || productMinStock < 0 || !Number.isInteger(productMinStock))
-    ) {
-      return res.status(400).json({
-        error: "Informe um estoque mínimo válido."
-      });
-    }
-
-    let imageUrl = productExists.imageUrl;
-
-    if (imageBase64) {
-      imageUrl = await uploadProductImage(imageBase64);
-    }
-
-    const product = await prisma.product.update({
+    const user = await prisma.user.findUnique({
       where: {
-        id: req.params.id
+        email: normalizedEmail
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: "Nenhuma conta encontrada com este e-mail."
+      });
+    }
+
+    const rawToken = createResetToken();
+    const hashedToken = hashResetToken(rawToken);
+
+    const expires = new Date(Date.now() + 60 * 60 * 1000);
+
+    await prisma.user.update({
+      where: {
+        id: user.id
       },
       data: {
-        name: productName,
-        category: productCategory,
-        price: productPrice,
-        stock: productStock,
-        minStock: productMinStock,
-        imageUrl
+        resetToken: hashedToken,
+        resetTokenExpires: expires
       }
     });
 
-    await createProductStockNotification(product, req.userId);
+    const resetLink = `${FRONTEND_URL}/reset-password.html?token=${rawToken}&id=${user.id}`;
 
-    res.json(product);
+    res.json({
+      message: "Link de recuperação gerado com sucesso.",
+      resetLink
+    });
   } catch (error) {
+    console.error("Erro forgot-password:", error);
+
     res.status(500).json({
-      error: "Erro ao editar produto.",
-      details: error.message
+      error: "Não foi possível gerar o link de recuperação."
     });
   }
 });
 
-// DELETAR PRODUTO COM REGRA DE INTEGRIDADE
-router.delete("/:id", async (req, res) => {
+// REDEFINIR SENHA
+router.post("/reset-password", async (req, res) => {
   try {
-    const productExists = await prisma.product.findFirst({
-      where: {
-        id: req.params.id,
-        userId: req.userId
-      }
-    });
+    const { userId, token, password } = req.body;
 
-    if (!productExists) {
-      return res.status(404).json({
-        error: "Produto não encontrado."
+    if (!userId || !token || !password) {
+      return res.status(400).json({
+        error: "Informe o token, usuário e a nova senha."
       });
     }
 
-    const vendasVinculadas = await prisma.venda.count({
-      where: {
-        productId: req.params.id,
-        userId: req.userId
-      }
-    });
-
-    if (vendasVinculadas > 0) {
-      return res.status(409).json({
-        error: "Este produto não pode ser excluído porque já possui vendas vinculadas.",
-        message:
-          "Para manter o histórico e a integridade dos relatórios, produtos vendidos devem permanecer cadastrados.",
-        vendasVinculadas
+    if (password.length < 6) {
+      return res.status(400).json({
+        error: "A nova senha deve ter no mínimo 6 caracteres."
       });
     }
 
-    await prisma.product.delete({
+    const hashedToken = hashResetToken(token);
+
+    const user = await prisma.user.findFirst({
       where: {
-        id: req.params.id
+        id: userId,
+        resetToken: hashedToken,
+        resetTokenExpires: {
+          gt: new Date()
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        error: "Link inválido ou expirado. Solicite uma nova recuperação."
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.update({
+      where: {
+        id: user.id
+      },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpires: null
       }
     });
 
     res.json({
-      message: "Produto removido com sucesso."
+      message: "Senha redefinida com sucesso. Faça login novamente."
     });
   } catch (error) {
+    console.error("Erro reset-password:", error);
+
     res.status(500).json({
-      error: "Erro ao deletar produto.",
-      details: error.message
+      error: "Não foi possível redefinir a senha."
     });
   }
 });

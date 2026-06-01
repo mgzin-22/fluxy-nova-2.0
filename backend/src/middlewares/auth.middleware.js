@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const SECRET = "fluxy_secret";
+const SECRET = process.env.JWT_SECRET || "fluxy_secret";
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -9,9 +9,9 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ error: "Token não enviado." });
   }
 
-  const [, token] = authHeader.split(" ");
+  const [type, token] = authHeader.split(" ");
 
-  if (!token) {
+  if (type !== "Bearer" || !token) {
     return res.status(401).json({ error: "Token inválido." });
   }
 
