@@ -8,14 +8,21 @@ const THEME_KEY = "fluxy_theme";
 
 const token = localStorage.getItem(TOKEN_KEY);
 
-
 const formVenda = document.getElementById("form-venda");
+
 const produtoVendaInput = document.getElementById("produto-venda");
+const buscarProdutoVendaInput = document.getElementById("buscar-produto-venda");
+const productDropdown = document.getElementById("product-dropdown");
+const limparProdutoVendaBtn = document.getElementById("limpar-produto-venda");
+
 const categoriaVendaInput = document.getElementById("categoria-venda");
 const quantidadeVendaInput = document.getElementById("quantidade-venda");
 const precoUnitarioInput = document.getElementById("preco-unitario");
 const pagamentoVendaInput = document.getElementById("pagamento-venda");
 const vendasFeedback = document.getElementById("vendas-feedback");
+
+const qtyMinusBtn = document.getElementById("qty-minus");
+const qtyPlusBtn = document.getElementById("qty-plus");
 
 const listaVendas = document.getElementById("lista-vendas");
 const buscarVendaInput = document.getElementById("buscar-venda");
@@ -44,7 +51,7 @@ const pageInfoEl = document.getElementById("page-info");
 
 let produtosGlobais = [];
 let vendasGlobais = [];
-let periodoAtual = "all";
+let periodoAtual = "today";
 let dataInicialCustom = null;
 let dataFinalCustom = null;
 
@@ -59,7 +66,6 @@ function aplicarTemaSalvo() {
   const savedTheme = localStorage.getItem(THEME_KEY) || "dark";
   document.body.classList.toggle("light", savedTheme === "light");
 }
-
 
 function formatMoney(value) {
   return Number(value || 0).toLocaleString("pt-BR", {
@@ -113,21 +119,162 @@ function getInitial(name) {
   return name?.trim()?.charAt(0)?.toUpperCase() || "P";
 }
 
+function getStockStatus(produto) {
+  const stock = Number(produto.stock || 0);
+  const minStock = Number(produto.minStock || 0);
+
+  if (stock <= 0) {
+    return {
+      label: "Sem estoque",
+      type: "danger"
+    };
+  }
+
+  if (minStock > 0 && stock <= minStock) {
+    return {
+      label: "Estoque baixo",
+      type: "warning"
+    };
+  }
+
+  return {
+    label: `${stock} un.`,
+    type: "normal"
+  };
+}
+
 function getProdutoSelecionado() {
   return produtosGlobais.find((produto) => produto.id === produtoVendaInput.value);
 }
 
-function atualizarProdutoSelecionado() {
-  const produto = getProdutoSelecionado();
+function getProductAvatar(produto) {
+  if (produto.imageUrl) {
+    return `
+      <span class="product-option-avatar">
+        <img src="${produto.imageUrl}" alt="${produto.name}">
+      </span>
+    `;
+  }
 
-  if (!produto) {
-    categoriaVendaInput.value = "";
-    precoUnitarioInput.value = "";
+  return `<span class="product-option-avatar">${getInitial(produto.name)}</span>`;
+}
+
+function limparProdutoSelecionado() {
+  produtoVendaInput.value = "";
+  buscarProdutoVendaInput.value = "";
+  categoriaVendaInput.value = "";
+  precoUnitarioInput.value = "";
+  quantidadeVendaInput.value = 1;
+  quantidadeVendaInput.removeAttribute("max");
+
+  limparProdutoVendaBtn.hidden = true;
+  productDropdown.hidden = true;
+  productDropdown.innerHTML = "";
+}
+
+function selecionarProduto(produto) {
+  if (Number(produto.stock) <= 0) {
+    notifyToast(
+      "warning",
+      "package-x",
+      "Produto sem estoque",
+      "Este produto não pode ser vendido porque está sem estoque."
+    );
     return;
   }
 
+  produtoVendaInput.value = produto.id;
+  buscarProdutoVendaInput.value = produto.name;
   categoriaVendaInput.value = produto.category || "Sem categoria";
   precoUnitarioInput.value = formatMoney(produto.price);
+  quantidadeVendaInput.value = 1;
+  quantidadeVendaInput.max = produto.stock;
+
+  limparProdutoVendaBtn.hidden = false;
+  productDropdown.hidden = true;
+  productDropdown.innerHTML = "";
+}
+
+function filtrarProdutosParaVenda(search = "") {
+  const termo = search.trim().toLowerCase();
+
+  let produtos = [...produtosGlobais];
+
+  if (termo) {
+    produtos = produtos.filter((produto) => {
+      const nome = produto.name?.toLowerCase() || "";
+      const categoria = produto.category?.toLowerCase() || "";
+      const sku = produto.id?.toLowerCase() || "";
+
+      return nome.includes(termo) || categoria.includes(termo) || sku.includes(termo);
+    });
+  }
+
+  return produtos
+    .sort((a, b) => {
+      const estoqueA = Number(a.stock || 0);
+      const estoqueB = Number(b.stock || 0);
+
+      if (estoqueA <= 0 && estoqueB > 0) return 1;
+      if (estoqueA > 0 && estoqueB <= 0) return -1;
+
+      return a.name.localeCompare(b.name, "pt-BR");
+    })
+    .slice(0, 10);
+}
+
+function renderProductDropdown(search = "") {
+  const produtos = filtrarProdutosParaVenda(search);
+
+  productDropdown.innerHTML = "";
+
+  if (!produtos.length) {
+    productDropdown.innerHTML = `
+      <div class="product-empty-option">
+        Nenhum produto encontrado.
+        <br>
+        <a href="estoque.html">Cadastrar novo produto</a>
+      </div>
+    `;
+
+    productDropdown.hidden = false;
+    return;
+  }
+
+  produtos.forEach((produto) => {
+    const status = getStockStatus(produto);
+    const disabled = Number(produto.stock) <= 0;
+
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = `product-option ${disabled ? "disabled" : ""}`;
+
+    option.innerHTML = `
+      ${getProductAvatar(produto)}
+
+      <span class="product-option-info">
+        <strong>${produto.name}</strong>
+        <small>
+          ${produto.category || "Sem categoria"} • SKU: ${produto.id.slice(0, 8).toUpperCase()}
+        </small>
+      </span>
+
+      <span class="product-option-meta">
+        <span class="product-option-price">${formatMoney(produto.price)}</span>
+        <span class="product-stock-pill ${status.type}">${status.label}</span>
+      </span>
+    `;
+
+    option.addEventListener("click", () => selecionarProduto(produto));
+
+    productDropdown.appendChild(option);
+  });
+
+  productDropdown.hidden = false;
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 }
 
 function obterCategoriasDasVendas() {
@@ -185,15 +332,17 @@ async function carregarProdutos() {
 
     produtosGlobais = Array.isArray(data) ? data : [];
 
-    produtoVendaInput.innerHTML = `<option value="">Selecione um produto</option>`;
+    const produtoSelecionado = getProdutoSelecionado();
 
-    produtosGlobais.forEach((produto) => {
-      const option = document.createElement("option");
-      option.value = produto.id;
-      option.textContent = `${produto.name} - Estoque: ${produto.stock}`;
-      option.disabled = Number(produto.stock) <= 0;
-      produtoVendaInput.appendChild(option);
-    });
+    if (produtoSelecionado) {
+      const produtoAtualizado = produtosGlobais.find((produto) => produto.id === produtoSelecionado.id);
+
+      if (produtoAtualizado) {
+        selecionarProduto(produtoAtualizado);
+      } else {
+        limparProdutoSelecionado();
+      }
+    }
   } catch (error) {
     console.error(error);
     showFeedback("Erro ao conectar com produtos.", "error");
@@ -263,14 +412,15 @@ function filtrarPorPeriodo(vendas) {
     if (periodoAtual === "week") {
       const seteDiasAtras = new Date();
       seteDiasAtras.setDate(agora.getDate() - 7);
+      seteDiasAtras.setHours(0, 0, 0, 0);
       return dataVenda >= seteDiasAtras;
     }
 
     if (periodoAtual === "month") {
-      return (
-        dataVenda.getMonth() === agora.getMonth() &&
-        dataVenda.getFullYear() === agora.getFullYear()
-      );
+      const trintaDiasAtras = new Date();
+      trintaDiasAtras.setDate(agora.getDate() - 30);
+      trintaDiasAtras.setHours(0, 0, 0, 0);
+      return dataVenda >= trintaDiasAtras;
     }
 
     if (periodoAtual === "custom") {
@@ -453,7 +603,7 @@ function atualizarResumo(vendas) {
     all: "Todo o histórico",
     today: "Hoje",
     week: "Últimos 7 dias",
-    month: "Mês atual",
+    month: "Últimos 30 dias",
     custom: "Período personalizado"
   };
 
@@ -481,6 +631,8 @@ formVenda.addEventListener("submit", async (event) => {
       "Produto não selecionado",
       "Escolha um produto do estoque para registrar a venda."
     );
+    buscarProdutoVendaInput.focus();
+    renderProductDropdown(buscarProdutoVendaInput.value);
     return;
   }
 
@@ -549,8 +701,7 @@ formVenda.addEventListener("submit", async (event) => {
     }
 
     formVenda.reset();
-    categoriaVendaInput.value = "";
-    precoUnitarioInput.value = "";
+    limparProdutoSelecionado();
     quantidadeVendaInput.value = 1;
 
     showFeedback("Venda registrada com sucesso!");
@@ -576,7 +727,43 @@ formVenda.addEventListener("submit", async (event) => {
   }
 });
 
-produtoVendaInput.addEventListener("change", atualizarProdutoSelecionado);
+buscarProdutoVendaInput.addEventListener("input", () => {
+  produtoVendaInput.value = "";
+  categoriaVendaInput.value = "";
+  precoUnitarioInput.value = "";
+  quantidadeVendaInput.removeAttribute("max");
+
+  limparProdutoVendaBtn.hidden = buscarProdutoVendaInput.value.trim() === "";
+
+  renderProductDropdown(buscarProdutoVendaInput.value);
+});
+
+buscarProdutoVendaInput.addEventListener("focus", () => {
+  renderProductDropdown(buscarProdutoVendaInput.value);
+});
+
+limparProdutoVendaBtn.addEventListener("click", limparProdutoSelecionado);
+
+qtyMinusBtn.addEventListener("click", () => {
+  const atual = Number(quantidadeVendaInput.value || 1);
+  quantidadeVendaInput.value = Math.max(1, atual - 1);
+});
+
+qtyPlusBtn.addEventListener("click", () => {
+  const produto = getProdutoSelecionado();
+  const atual = Number(quantidadeVendaInput.value || 1);
+  const max = produto ? Number(produto.stock) : Infinity;
+
+  quantidadeVendaInput.value = Math.min(max, atual + 1);
+});
+
+document.addEventListener("click", (event) => {
+  const clickedInsideProductSearch = event.target.closest(".product-combobox");
+
+  if (!clickedInsideProductSearch && productDropdown) {
+    productDropdown.hidden = true;
+  }
+});
 
 buscarVendaInput.addEventListener("input", () => {
   resetarPagina();
@@ -681,8 +868,6 @@ function sair() {
 aplicarTemaSalvo();
 carregarProdutos();
 carregarVendas();
-
-
 
 if (window.lucide) {
   lucide.createIcons();

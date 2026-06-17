@@ -21,7 +21,6 @@
   <link rel="manifest" href="assets/favicon/site.webmanifest" />
   <link rel="shortcut icon" href="assets/favicon/favicon.ico" />
   <meta name="theme-color" content="#0b1220" />
-
 </head>
 
 <body>
@@ -56,7 +55,6 @@
         </a>
       </nav>
     </div>
-
   </aside>
 
   <main class="dashboard vendas-page">
@@ -133,16 +131,34 @@
 
         <div>
           <h2>Nova venda</h2>
-          <p>Selecione um produto cadastrado no estoque.</p>
+          <p>Busque um produto e os dados serão preenchidos automaticamente.</p>
         </div>
       </div>
 
       <form id="form-venda" class="sale-form">
-        <div class="form-group product-select-group">
-          <label for="produto-venda">Produto</label>
-          <select id="produto-venda" required>
-            <option value="">Selecione um produto</option>
-          </select>
+        <div class="form-group product-search-group">
+          <label for="buscar-produto-venda">Produto</label>
+
+          <div class="product-combobox">
+            <div class="product-search-input-wrap">
+              <i data-lucide="search"></i>
+
+              <input
+                id="buscar-produto-venda"
+                type="text"
+                placeholder="Buscar produto..."
+                autocomplete="off"
+              />
+
+              <button id="limpar-produto-venda" type="button" class="clear-product-btn" hidden>
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+
+            <input id="produto-venda" type="hidden" />
+
+            <div id="product-dropdown" class="product-dropdown" hidden></div>
+          </div>
         </div>
 
         <div class="form-group">
@@ -150,9 +166,20 @@
           <input id="categoria-venda" type="text" placeholder="Categoria" disabled />
         </div>
 
-        <div class="form-group">
+        <div class="form-group quantity-group">
           <label for="quantidade-venda">Quantidade</label>
-          <input id="quantidade-venda" type="number" min="1" value="1" required />
+
+          <div class="quantity-control">
+            <button id="qty-minus" type="button">
+              <i data-lucide="minus"></i>
+            </button>
+
+            <input id="quantidade-venda" type="number" min="1" value="1" required />
+
+            <button id="qty-plus" type="button">
+              <i data-lucide="plus"></i>
+            </button>
+          </div>
         </div>
 
         <div class="form-group">
@@ -219,16 +246,16 @@
         </select>
       </div>
 
-      <div class="period-filters sales-period-filters">
-        <button class="period-btn active" data-period="all" type="button">Tudo</button>
-        <button class="period-btn" data-period="today" type="button">Hoje</button>
-        <button class="period-btn" data-period="week" type="button">Semana</button>
-        <button class="period-btn" data-period="month" type="button">Mês</button>
-        <button class="period-btn" data-period="custom" type="button">
-          <i data-lucide="calendar-days"></i>
-          Personalizado
-        </button>
-      </div>
+<div class="period-filters sales-period-filters">
+  <button class="period-btn" data-period="all" type="button">Tudo</button>
+  <button class="period-btn active" data-period="today" type="button">Hoje</button>
+  <button class="period-btn" data-period="week" type="button">Semana</button>
+  <button class="period-btn" data-period="month" type="button">30 dias</button>
+  <button class="period-btn" data-period="custom" type="button">
+    <i data-lucide="calendar-days"></i>
+    Personalizado
+  </button>
+</div>
 
       <div id="custom-date-box" class="custom-date-box" hidden>
         <div class="form-group">

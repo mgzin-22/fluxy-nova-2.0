@@ -8,7 +8,15 @@ const crypto = require("crypto");
 const prisma = new PrismaClient();
 
 const SECRET = process.env.JWT_SECRET || "fluxy_secret";
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://127.0.0.1:5500/frontend";
+function getFrontendUrl(req) {
+  const origin = req.headers.origin;
+
+  if (origin) {
+    return origin.replace(/\/$/, "");
+  }
+
+  return (process.env.FRONTEND_URL || "http://127.0.0.1:5500/frontend").replace(/\/$/, "");
+}
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
@@ -178,7 +186,8 @@ router.post("/forgot-password", async (req, res) => {
       }
     });
 
-    const resetLink = `${FRONTEND_URL}/reset-password.html?token=${rawToken}&id=${user.id}`;
+    const frontendUrl = getFrontendUrl(req);
+    const resetLink = `${frontendUrl}/reset-password.html?token=${rawToken}&id=${user.id}`;
 
     res.json({
       message: "Link de recuperação gerado com sucesso.",
